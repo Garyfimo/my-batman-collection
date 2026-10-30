@@ -1,0 +1,85 @@
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+local.properties
+proguard/
+*.log
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+gradle-app.setting
+.gradletasknamecache
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+captures/
+.navigation/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+.kotlin/
+
+# Jetpack Compose
+# Compose compiler metrics / reports
+compose_compiler_config.conf
+**/compose-metrics/
+**/compose-reports/
+
+# Koin
+# Koin generated verification/config (KSP outputs land in build/, already ignored)
+
+# Unit tests
+**/test-results/
+**/jacoco/
+**/jacocoHtml/
+*.exec
+coverage/
+
+# UI tests (Espresso / Compose UI tests)
+**/androidTest-results/
+**/reports/androidTests/
+**/outputs/androidTest-results/
+screenshots/
+
+# Keystore / signing
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# Google services
+google-services.json
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
