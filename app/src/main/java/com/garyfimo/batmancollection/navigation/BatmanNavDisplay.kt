@@ -1,7 +1,6 @@
 package com.garyfimo.batmancollection.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
@@ -14,7 +13,7 @@ fun BatmanNavDisplay() {
 
     NavDisplay(
         backStack = backStack,
-        onBack = { count -> repeat(count) { backStack.removeLastOrNull() } },
+        onBack = { backStack.removeLastOrNull() },
         entryProvider = entryProvider {
             entry<HomeKey> {
                 HomeScreen(
