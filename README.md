@@ -4,30 +4,22 @@ Android app template.
 
 ## Stack
 
-- Jetpack Compose + Material 3
-- Navigation 3 (`androidx.navigation3`)
-- Koin (DI) with Compose integration
-- Ktor client (OkHttp engine) + kotlinx.serialization
+- Android Gradle Plugin 9.2.1 (Gradle 9.8.2, bundled Kotlin)
+- Jetpack Compose (BOM 2026.09) + Material 3
+- Navigation 3 `1.2.0` (`androidx.navigation3`)
+- Koin `4.2.x` (DI) with Compose integration
+- Ktor `3.6.x` client (OkHttp engine) + kotlinx.serialization
 - Unit tests: JUnit 4, MockK, Turbine, coroutines-test
 - UI tests: Compose UI Test, Espresso, MockK
 
-## First-time setup
+Versions are centralized in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
-The `gradle-wrapper.jar` binary is intentionally not committed. Generate it with
-either of:
-
-- Open the project in Android Studio — it will populate the wrapper on sync.
-- From a shell with Gradle installed:
-  ```
-  gradle wrapper --gradle-version 8.11.1
-  ```
-
-After that, build and test with:
+## Build & test
 
 ```
 ./gradlew assembleDebug
 ./gradlew testDebugUnitTest
-./gradlew connectedDebugAndroidTest
+./gradlew connectedDebugAndroidTest   # needs a device/emulator
 ```
 
 ## Layout
@@ -44,3 +36,11 @@ app/src/main/java/com/garyfimo/batmancollection/
     ├── details/            # Detail screen
     └── theme/
 ```
+
+## Notes
+
+- With AGP 9, the `org.jetbrains.kotlin.android` plugin is no longer applied —
+  AGP bundles Kotlin. The JVM target is set via
+  `android { kotlin { compilerOptions { jvmTarget = ... } } }`.
+- Material Icons is not pulled in. If you want icons, add
+  `androidx.compose.material:material-icons-extended` to `app/build.gradle.kts`.
