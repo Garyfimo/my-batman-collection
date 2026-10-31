@@ -3,24 +3,33 @@ package com.garyfimo.batmancollection.ui.details
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.garyfimo.batmancollection.data.Batman
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -39,7 +48,15 @@ fun DetailsScreen(
             TopAppBar(
                 title = { Text(title(state)) },
                 navigationIcon = {
-                    TextButton(onClick = onBack) { Text("Back") }
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.testTag(TAG_DETAILS_BACK),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                        )
+                    }
                 },
             )
         },
@@ -79,6 +96,16 @@ private fun BatmanDetails(batman: Batman) {
             .testTag(TAG_DETAILS_CONTENT),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        AsyncImage(
+            model = batman.imageUrl,
+            contentDescription = "${batman.name} — ${batman.alterEgo}",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(4f / 3f)
+                .clip(RoundedCornerShape(16.dp))
+                .testTag(TAG_DETAILS_IMAGE),
+        )
         Text(batman.name, style = MaterialTheme.typography.headlineMedium)
         LabeledLine("Alter ego", batman.alterEgo)
         LabeledLine("Era", batman.era)
@@ -109,3 +136,5 @@ const val TAG_DETAILS_LOADING = "details.loading"
 const val TAG_DETAILS_ERROR = "details.error"
 const val TAG_DETAILS_NOT_FOUND = "details.notFound"
 const val TAG_DETAILS_CONTENT = "details.content"
+const val TAG_DETAILS_IMAGE = "details.image"
+const val TAG_DETAILS_BACK = "details.back"

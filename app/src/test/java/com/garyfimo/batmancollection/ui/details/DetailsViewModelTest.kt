@@ -35,6 +35,7 @@ class DetailsViewModelTest {
             era = "Modern Age",
             firstAppearance = "Detective Comics #27 (1939)",
             description = "The original Dark Knight.",
+            imageUrl = "https://example.com/bruce.jpg",
         )
         coEvery { repository.get("bruce-wayne") } returns batman
 
