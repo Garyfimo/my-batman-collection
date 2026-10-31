@@ -10,4 +10,5 @@ data class Batman(
     val era: String,
     val firstAppearance: String,
     val description: String,
+    val imageUrl: String,
 )

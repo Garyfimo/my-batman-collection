@@ -43,6 +43,7 @@ class HomeViewModelTest {
                 era = "Modern Age",
                 firstAppearance = "Detective Comics #27 (1939)",
                 description = "The original Dark Knight.",
+                imageUrl = "https://example.com/bruce.jpg",
             ),
         )
         coEvery { repository.list() } returns items

@@ -10,8 +10,8 @@ import org.junit.Test
 class MockBatmanRepositoryTest {
 
     private val source = listOf(
-        Batman("a", "Batman", "A", "Era", "First", "Desc"),
-        Batman("b", "Batman", "B", "Era", "First", "Desc"),
+        Batman("a", "Batman", "A", "Era", "First", "Desc", "img-a"),
+        Batman("b", "Batman", "B", "Era", "First", "Desc", "img-b"),
     )
     private val repository = MockBatmanRepository(source = source, latencyMillis = 0L)
 
