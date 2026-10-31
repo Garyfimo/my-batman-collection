@@ -3,14 +3,6 @@ package com.garyfimo.batmancollection.data
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class Batman(
-    val id: String,
-    val name: String,
-    val description: String,
-)
 
 class BatmanApi(private val client: HttpClient) {
     suspend fun list(): List<Batman> = client.get("$BASE_URL/batmen").body()

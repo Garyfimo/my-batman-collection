@@ -35,7 +35,17 @@ class HomeViewModelTest {
 
     @Test
     fun `emits Ready state when repository returns items`() = runTest(dispatcher) {
-        val items = listOf(Batman("1", "Bruce Wayne", "The Dark Knight"))
+        val items = listOf(
+            Batman(
+                id = "bruce-wayne",
+                name = "Batman",
+                alterEgo = "Bruce Wayne",
+                era = "Modern Age",
+                firstAppearance = "Detective Comics #27 (1939)",
+                description = "The original Dark Knight.",
+                imageUrl = "https://example.com/bruce.jpg",
+            ),
+        )
         coEvery { repository.list() } returns items
 
         val viewModel = HomeViewModel(repository)
