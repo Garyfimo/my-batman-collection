@@ -1,13 +1,16 @@
 package com.garyfimo.batmancollection.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -18,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.garyfimo.batmancollection.data.Batman
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +43,9 @@ fun HomeScreen(
             contentAlignment = Alignment.Center,
         ) {
             when (val s = state) {
-                HomeUiState.Loading -> CircularProgressIndicator(Modifier.testTag(TAG_HOME_LOADING))
+                HomeUiState.Loading -> CircularProgressIndicator(
+                    Modifier.testTag(TAG_HOME_LOADING),
+                )
                 is HomeUiState.Error -> Text(
                     text = s.message,
                     modifier = Modifier.testTag(TAG_HOME_ERROR),
@@ -51,16 +57,32 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.Top,
                 ) {
                     items(s.items, key = { it.id }) { batman ->
-                        ListItem(
-                            headlineContent = { Text(batman.name) },
-                            supportingContent = { Text(batman.description) },
-                            modifier = Modifier.testTag("$TAG_HOME_ITEM_PREFIX${batman.id}"),
+                        BatmanRow(
+                            batman = batman,
+                            onClick = { onItemClick(batman.id) },
                         )
+                        HorizontalDivider()
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun BatmanRow(
+    batman: Batman,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        overlineContent = { Text(batman.era) },
+        headlineContent = { Text(batman.name) },
+        supportingContent = { Text(batman.alterEgo) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag("$TAG_HOME_ITEM_PREFIX${batman.id}"),
+    )
 }
 
 const val TAG_HOME_ROOT = "home.root"
