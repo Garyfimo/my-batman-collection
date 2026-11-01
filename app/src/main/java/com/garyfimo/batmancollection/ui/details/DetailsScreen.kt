@@ -1,5 +1,6 @@
 package com.garyfimo.batmancollection.ui.details
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,8 +30,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
 import com.garyfimo.batmancollection.data.Batman
+import com.garyfimo.batmancollection.navigation.LocalSharedTransitionScope
+import com.garyfimo.batmancollection.navigation.batmanImageSharedKey
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -86,8 +90,25 @@ fun DetailsScreen(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun BatmanDetails(batman: Batman) {
+    val sharedScope = LocalSharedTransitionScope.current
+    val baseImageModifier = Modifier
+        .fillMaxWidth()
+        .aspectRatio(4f / 3f)
+        .clip(RoundedCornerShape(16.dp))
+    val imageModifier = if (sharedScope != null) {
+        with(sharedScope) {
+            baseImageModifier.sharedElement(
+                sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
+                animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+            )
+        }
+    } else {
+        baseImageModifier
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -100,11 +121,7 @@ private fun BatmanDetails(batman: Batman) {
             model = batman.imageUrl,
             contentDescription = "${batman.name} — ${batman.alterEgo}",
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(4f / 3f)
-                .clip(RoundedCornerShape(16.dp))
-                .testTag(TAG_DETAILS_IMAGE),
+            modifier = imageModifier.testTag(TAG_DETAILS_IMAGE),
         )
         Text(batman.name, style = MaterialTheme.typography.headlineMedium)
         LabeledLine("Alter ego", batman.alterEgo)
