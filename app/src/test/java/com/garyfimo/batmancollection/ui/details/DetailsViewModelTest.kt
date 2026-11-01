@@ -2,6 +2,7 @@ package com.garyfimo.batmancollection.ui.details
 
 import app.cash.turbine.test
 import com.garyfimo.batmancollection.data.Batman
+import com.garyfimo.batmancollection.data.BatmanLookup
 import com.garyfimo.batmancollection.data.BatmanRepository
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -27,7 +28,7 @@ class DetailsViewModelTest {
     @After fun tearDown() { Dispatchers.resetMain() }
 
     @Test
-    fun `emits Ready when repository returns a Batman`() = runTest(dispatcher) {
+    fun `emits Ready when repository returns Found`() = runTest(dispatcher) {
         val batman = Batman(
             id = "bruce-wayne",
             name = "Batman",
@@ -37,7 +38,7 @@ class DetailsViewModelTest {
             description = "The original Dark Knight.",
             imageUrl = "https://example.com/bruce.jpg",
         )
-        coEvery { repository.get("bruce-wayne") } returns batman
+        coEvery { repository.get("bruce-wayne") } returns BatmanLookup.Found(batman)
 
         val viewModel = DetailsViewModel(id = "bruce-wayne", repository = repository)
 
@@ -49,8 +50,8 @@ class DetailsViewModelTest {
     }
 
     @Test
-    fun `emits NotFound when repository returns null`() = runTest(dispatcher) {
-        coEvery { repository.get("ghost") } returns null
+    fun `emits NotFound when repository returns NotFound`() = runTest(dispatcher) {
+        coEvery { repository.get("ghost") } returns BatmanLookup.NotFound
 
         val viewModel = DetailsViewModel(id = "ghost", repository = repository)
 
@@ -62,8 +63,9 @@ class DetailsViewModelTest {
     }
 
     @Test
-    fun `emits Error when repository throws`() = runTest(dispatcher) {
-        coEvery { repository.get("bruce-wayne") } throws IllegalStateException("boom")
+    fun `emits Error when repository returns Failure`() = runTest(dispatcher) {
+        coEvery { repository.get("bruce-wayne") } returns
+            BatmanLookup.Failure(IllegalStateException("boom"))
 
         val viewModel = DetailsViewModel(id = "bruce-wayne", repository = repository)
 
