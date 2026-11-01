@@ -8,3 +8,5 @@ import androidx.compose.runtime.compositionLocalOf
 val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
 
 fun batmanImageSharedKey(id: String): String = "batman-image-$id"
+
+fun batmanPopupImageKey(id: String): String = "batman-popup-$id"
