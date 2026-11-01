@@ -84,6 +84,8 @@ dependencies {
 
     val koinBom = platform(libs.koin.bom)
     implementation(koinBom)
+    testImplementation(koinBom)
+    androidTestImplementation(koinBom)
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
