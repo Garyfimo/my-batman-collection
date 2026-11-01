@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -196,9 +197,13 @@ private fun ExpandedImageOverlay(
     onDismiss: () -> Unit,
 ) {
     val sharedScope = LocalSharedTransitionScope.current
+    // aspectRatio(1f) gives the hero a deterministic size even before Coil resolves
+    // the image, keeps tall / wide pictures fully visible under ContentScale.Fit, and
+    // leaves the surrounding scrim large enough to stay tap-to-dismiss.
     val base = Modifier
         .fillMaxWidth()
         .padding(24.dp)
+        .aspectRatio(1f)
         .clip(RoundedCornerShape(16.dp))
     val imageModifier = if (sharedScope != null) {
         with(sharedScope) {
