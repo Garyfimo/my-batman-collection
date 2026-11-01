@@ -28,10 +28,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +63,19 @@ fun HomeScreen(
     var selectedBatman by remember { mutableStateOf<Batman?>(null) }
     var lastSelectedBatman by remember { mutableStateOf<Batman?>(null) }
     selectedBatman?.let { lastSelectedBatman = it }
+    // Gate the thumbnail's popup shared-element modifier: it must be attached while
+    // the popup is open AND through the exit animation, then detached so a later
+    // detail-nav transition doesn't inherit a stale caller-managed "visible = true"
+    // state (which would hold the thumbnail in the shared-transition overlay layer).
+    var popupActive by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedBatman) {
+        if (selectedBatman != null) {
+            popupActive = true
+        } else if (popupActive) {
+            delay(POPUP_FADE_MILLIS.toLong() + POPUP_GRACE_MILLIS)
+            popupActive = false
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(
@@ -91,6 +106,7 @@ fun HomeScreen(
                             BatmanRow(
                                 batman = batman,
                                 isExpanded = selectedBatman?.id == batman.id,
+                                popupActive = popupActive,
                                 onRowClick = { onItemClick(batman.id) },
                                 onImageClick = { selectedBatman = batman },
                             )
@@ -123,6 +139,7 @@ fun HomeScreen(
 private fun BatmanRow(
     batman: Batman,
     isExpanded: Boolean,
+    popupActive: Boolean,
     onRowClick: () -> Unit,
     onImageClick: () -> Unit,
 ) {
@@ -132,16 +149,19 @@ private fun BatmanRow(
         .clip(RoundedCornerShape(8.dp))
     val thumbnailModifier = if (sharedScope != null) {
         with(sharedScope) {
-            thumbnailBase
-                .sharedElement(
-                    sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
-                    animatedVisibilityScope = LocalNavAnimatedContentScope.current,
-                )
-                .sharedElementWithCallerManagedVisibility(
+            val navScoped = thumbnailBase.sharedElement(
+                sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
+                animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+            )
+            if (popupActive) {
+                navScoped.sharedElementWithCallerManagedVisibility(
                     sharedContentState = rememberSharedContentState(batmanPopupImageKey(batman.id)),
                     visible = !isExpanded,
                     boundsTransform = { _, _ -> popupBoundsSpring() },
                 )
+            } else {
+                navScoped
+            }
         }
     } else {
         thumbnailBase
@@ -228,6 +248,7 @@ private fun popupBoundsSpring() = spring<androidx.compose.ui.geometry.Rect>(
 
 private const val POPUP_BOUNDS_STIFFNESS = 237f
 private const val POPUP_FADE_MILLIS = 286
+private const val POPUP_GRACE_MILLIS = 100L
 
 const val TAG_HOME_ROOT = "home.root"
 const val TAG_HOME_LOADING = "home.loading"
