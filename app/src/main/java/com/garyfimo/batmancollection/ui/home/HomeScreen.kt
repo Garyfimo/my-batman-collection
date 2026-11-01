@@ -216,12 +216,15 @@ private fun ExpandedImageOverlay(
     }
 }
 
+// Spring duration scales as 1/sqrt(stiffness). StiffnessMediumLow (400f) gave the
+// previous feel; stiffness/1.3^2 ≈ 237f makes the morph ~30% slower.
 private fun popupBoundsSpring() = spring<androidx.compose.ui.geometry.Rect>(
     dampingRatio = Spring.DampingRatioLowBouncy,
-    stiffness = Spring.StiffnessMediumLow,
+    stiffness = POPUP_BOUNDS_STIFFNESS,
 )
 
-private const val POPUP_FADE_MILLIS = 220
+private const val POPUP_BOUNDS_STIFFNESS = 237f
+private const val POPUP_FADE_MILLIS = 286
 
 const val TAG_HOME_ROOT = "home.root"
 const val TAG_HOME_LOADING = "home.loading"
