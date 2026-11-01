@@ -2,6 +2,7 @@ package com.garyfimo.batmancollection.ui.home
 
 import app.cash.turbine.test
 import com.garyfimo.batmancollection.data.Batman
+import com.garyfimo.batmancollection.data.BatmanListResult
 import com.garyfimo.batmancollection.data.BatmanRepository
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -23,20 +24,23 @@ class HomeViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repository: BatmanRepository = mockk()
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @Before fun setUp() { Dispatchers.setMain(dispatcher) }
+    @After fun tearDown() { Dispatchers.resetMain() }
 
     @Test
-    fun `emits Ready state when repository returns items`() = runTest(dispatcher) {
-        val items = listOf(Batman("1", "Bruce Wayne", "The Dark Knight"))
-        coEvery { repository.list() } returns items
+    fun `emits Ready state when repository returns Success`() = runTest(dispatcher) {
+        val items = listOf(
+            Batman(
+                id = "bruce-wayne",
+                name = "Batman",
+                alterEgo = "Bruce Wayne",
+                era = "Modern Age",
+                firstAppearance = "Detective Comics #27 (1939)",
+                description = "The original Dark Knight.",
+                imageUrl = "https://example.com/bruce.jpg",
+            ),
+        )
+        coEvery { repository.list() } returns BatmanListResult.Success(items)
 
         val viewModel = HomeViewModel(repository)
 
@@ -48,8 +52,9 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `emits Error state when repository throws`() = runTest(dispatcher) {
-        coEvery { repository.list() } throws IllegalStateException("boom")
+    fun `emits Error state when repository returns Failure`() = runTest(dispatcher) {
+        coEvery { repository.list() } returns
+            BatmanListResult.Failure(IllegalStateException("boom"))
 
         val viewModel = HomeViewModel(repository)
 

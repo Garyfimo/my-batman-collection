@@ -14,6 +14,7 @@ import org.koin.dsl.module
 val networkModule = module {
     single {
         HttpClient(OkHttp) {
+            expectSuccess = true
             install(ContentNegotiation) {
                 json(
                     Json {
