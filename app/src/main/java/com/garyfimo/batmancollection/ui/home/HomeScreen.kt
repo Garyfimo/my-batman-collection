@@ -176,11 +176,8 @@ private fun ExpandedImageOverlay(
     onDismiss: () -> Unit,
 ) {
     val sharedScope = LocalSharedTransitionScope.current
-    // fillMaxSize + ContentScale.Fit bounds the hero to the viewport (minus padding),
-    // so very tall or very wide images stay fully visible without clipping during
-    // the morph.
     val base = Modifier
-        .fillMaxSize()
+        .fillMaxWidth()
         .padding(24.dp)
         .clip(RoundedCornerShape(16.dp))
     val imageModifier = if (sharedScope != null) {
