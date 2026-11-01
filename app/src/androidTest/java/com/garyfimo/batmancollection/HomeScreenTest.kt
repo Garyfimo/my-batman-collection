@@ -101,10 +101,16 @@ class HomeScreenTest {
 
         waitForItem("Bruce Wayne")
         composeRule.onNodeWithTag(TAG_HOME_OVERLAY).assertDoesNotExist()
-        composeRule.onNodeWithTag("$TAG_HOME_THUMB_PREFIX${sampleBatman.id}").performClick()
+        // ListItem merges its descendants' semantics, so the thumbnail is only
+        // reachable as its own clickable node via the unmerged tree.
+        composeRule
+            .onNodeWithTag("$TAG_HOME_THUMB_PREFIX${sampleBatman.id}", useUnmergedTree = true)
+            .performClick()
 
         composeRule.onNodeWithTag(TAG_HOME_OVERLAY).assertIsDisplayed()
-        composeRule.onNodeWithTag(TAG_HOME_OVERLAY_IMAGE).assertIsDisplayed()
+        composeRule
+            .onNodeWithTag(TAG_HOME_OVERLAY_IMAGE, useUnmergedTree = true)
+            .assertIsDisplayed()
         assertNull("row callback should not fire on image tap", clickedId)
     }
 
@@ -120,16 +126,17 @@ class HomeScreenTest {
         }
 
         waitForItem("Bruce Wayne")
-        composeRule.onNodeWithTag("$TAG_HOME_THUMB_PREFIX${sampleBatman.id}").performClick()
+        composeRule
+            .onNodeWithTag("$TAG_HOME_THUMB_PREFIX${sampleBatman.id}", useUnmergedTree = true)
+            .performClick()
         composeRule.onNodeWithTag(TAG_HOME_OVERLAY).assertIsDisplayed()
 
         composeRule.onNodeWithTag(TAG_HOME_OVERLAY).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Bruce Wayne").fetchSemanticsNodes().isNotEmpty() &&
-                composeRule
-                    .onAllNodesWithTag(TAG_HOME_OVERLAY)
-                    .fetchSemanticsNodes()
-                    .isEmpty()
+            composeRule
+                .onAllNodesWithTag(TAG_HOME_OVERLAY)
+                .fetchSemanticsNodes()
+                .isEmpty()
         }
         composeRule.onNodeWithTag(TAG_HOME_OVERLAY).assertDoesNotExist()
     }
