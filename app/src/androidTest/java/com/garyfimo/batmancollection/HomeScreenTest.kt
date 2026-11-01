@@ -1,12 +1,13 @@
 package com.garyfimo.batmancollection
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import com.garyfimo.batmancollection.data.Batman
 import com.garyfimo.batmancollection.data.BatmanListResult
 import com.garyfimo.batmancollection.data.BatmanRepository
@@ -131,13 +132,12 @@ class HomeScreenTest {
             .performClick()
         composeRule.onNodeWithTag(TAG_HOME_OVERLAY).assertIsDisplayed()
 
-        composeRule.onNodeWithTag(TAG_HOME_OVERLAY).performClick()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule
-                .onAllNodesWithTag(TAG_HOME_OVERLAY)
-                .fetchSemanticsNodes()
-                .isEmpty()
-        }
+        // Tap the scrim at the top-left corner — outside the centered square image, so
+        // the scrim's clickable fires (the image has its own no-op clickable at center).
+        // Using a real touch event instead of performClick(), which can skip
+        // indication-less clickables in some test configurations.
+        composeRule.onNodeWithTag(TAG_HOME_OVERLAY).performTouchInput { click(topLeft) }
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag(TAG_HOME_OVERLAY).assertDoesNotExist()
     }
 }
