@@ -55,9 +55,12 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var expanded by remember { mutableStateOf<Batman?>(null) }
-    val displayed = remember { mutableStateOf<Batman?>(null) }
-    if (expanded != null) displayed.value = expanded
+    // selectedBatman is the live selection; lastSelectedBatman keeps the previously
+    // selected one alive during the overlay's exit animation so the shared-element
+    // morph has content to animate back from.
+    var selectedBatman by remember { mutableStateOf<Batman?>(null) }
+    var lastSelectedBatman by remember { mutableStateOf<Batman?>(null) }
+    selectedBatman?.let { lastSelectedBatman = it }
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(
@@ -87,9 +90,9 @@ fun HomeScreen(
                         items(s.items, key = { it.id }) { batman ->
                             BatmanRow(
                                 batman = batman,
-                                isExpanded = expanded?.id == batman.id,
+                                isExpanded = selectedBatman?.id == batman.id,
                                 onRowClick = { onItemClick(batman.id) },
-                                onImageClick = { expanded = batman },
+                                onImageClick = { selectedBatman = batman },
                             )
                             HorizontalDivider()
                         }
@@ -99,17 +102,17 @@ fun HomeScreen(
         }
 
         AnimatedVisibility(
-            visible = expanded != null,
+            visible = selectedBatman != null,
             enter = fadeIn(animationSpec = tween(POPUP_FADE_MILLIS)),
             exit = fadeOut(animationSpec = tween(POPUP_FADE_MILLIS)),
             modifier = Modifier.fillMaxSize(),
         ) {
-            val batman = displayed.value ?: return@AnimatedVisibility
-            BackHandler(enabled = expanded != null) { expanded = null }
+            val batman = lastSelectedBatman ?: return@AnimatedVisibility
+            BackHandler(enabled = selectedBatman != null) { selectedBatman = null }
             ExpandedImageOverlay(
                 batman = batman,
-                visibleAsTarget = expanded?.id == batman.id,
-                onDismiss = { expanded = null },
+                visibleAsTarget = selectedBatman?.id == batman.id,
+                onDismiss = { selectedBatman = null },
             )
         }
     }
@@ -173,8 +176,11 @@ private fun ExpandedImageOverlay(
     onDismiss: () -> Unit,
 ) {
     val sharedScope = LocalSharedTransitionScope.current
+    // fillMaxSize + ContentScale.Fit bounds the hero to the viewport (minus padding),
+    // so very tall or very wide images stay fully visible without clipping during
+    // the morph.
     val base = Modifier
-        .fillMaxWidth()
+        .fillMaxSize()
         .padding(24.dp)
         .clip(RoundedCornerShape(16.dp))
     val imageModifier = if (sharedScope != null) {
