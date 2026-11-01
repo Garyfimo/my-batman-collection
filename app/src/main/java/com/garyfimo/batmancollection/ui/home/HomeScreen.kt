@@ -3,6 +3,9 @@ package com.garyfimo.batmancollection.ui.home
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -42,6 +45,7 @@ import coil3.compose.AsyncImage
 import com.garyfimo.batmancollection.data.Batman
 import com.garyfimo.batmancollection.navigation.LocalSharedTransitionScope
 import com.garyfimo.batmancollection.navigation.batmanImageSharedKey
+import com.garyfimo.batmancollection.navigation.batmanPopupImageKey
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -52,7 +56,6 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var expanded by remember { mutableStateOf<Batman?>(null) }
-    // Keep the last-expanded value alive during the exit animation.
     val displayed = remember { mutableStateOf<Batman?>(null) }
     if (expanded != null) displayed.value = expanded
 
@@ -84,6 +87,7 @@ fun HomeScreen(
                         items(s.items, key = { it.id }) { batman ->
                             BatmanRow(
                                 batman = batman,
+                                isExpanded = expanded?.id == batman.id,
                                 onRowClick = { onItemClick(batman.id) },
                                 onImageClick = { expanded = batman },
                             )
@@ -96,15 +100,15 @@ fun HomeScreen(
 
         AnimatedVisibility(
             visible = expanded != null,
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = fadeIn(animationSpec = tween(POPUP_FADE_MILLIS)),
+            exit = fadeOut(animationSpec = tween(POPUP_FADE_MILLIS)),
             modifier = Modifier.fillMaxSize(),
         ) {
             val batman = displayed.value ?: return@AnimatedVisibility
             BackHandler(enabled = expanded != null) { expanded = null }
             ExpandedImageOverlay(
                 batman = batman,
-                animatedVisibilityScope = this,
+                visibleAsTarget = expanded?.id == batman.id,
                 onDismiss = { expanded = null },
             )
         }
@@ -115,6 +119,7 @@ fun HomeScreen(
 @Composable
 private fun BatmanRow(
     batman: Batman,
+    isExpanded: Boolean,
     onRowClick: () -> Unit,
     onImageClick: () -> Unit,
 ) {
@@ -124,10 +129,16 @@ private fun BatmanRow(
         .clip(RoundedCornerShape(8.dp))
     val thumbnailModifier = if (sharedScope != null) {
         with(sharedScope) {
-            thumbnailBase.sharedElement(
-                sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
-                animatedVisibilityScope = LocalNavAnimatedContentScope.current,
-            )
+            thumbnailBase
+                .sharedElement(
+                    sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
+                    animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                )
+                .sharedElementWithCallerManagedVisibility(
+                    sharedContentState = rememberSharedContentState(batmanPopupImageKey(batman.id)),
+                    visible = !isExpanded,
+                    boundsTransform = { _, _ -> popupBoundsSpring() },
+                )
         }
     } else {
         thumbnailBase
@@ -158,7 +169,7 @@ private fun BatmanRow(
 @Composable
 private fun ExpandedImageOverlay(
     batman: Batman,
-    animatedVisibilityScope: androidx.compose.animation.AnimatedVisibilityScope,
+    visibleAsTarget: Boolean,
     onDismiss: () -> Unit,
 ) {
     val sharedScope = LocalSharedTransitionScope.current
@@ -168,9 +179,10 @@ private fun ExpandedImageOverlay(
         .clip(RoundedCornerShape(16.dp))
     val imageModifier = if (sharedScope != null) {
         with(sharedScope) {
-            base.sharedElement(
-                sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
-                animatedVisibilityScope = animatedVisibilityScope,
+            base.sharedElementWithCallerManagedVisibility(
+                sharedContentState = rememberSharedContentState(batmanPopupImageKey(batman.id)),
+                visible = visibleAsTarget,
+                boundsTransform = { _, _ -> popupBoundsSpring() },
             )
         }
     } else {
@@ -203,6 +215,13 @@ private fun ExpandedImageOverlay(
         )
     }
 }
+
+private fun popupBoundsSpring() = spring<androidx.compose.ui.geometry.Rect>(
+    dampingRatio = Spring.DampingRatioLowBouncy,
+    stiffness = Spring.StiffnessMediumLow,
+)
+
+private const val POPUP_FADE_MILLIS = 220
 
 const val TAG_HOME_ROOT = "home.root"
 const val TAG_HOME_LOADING = "home.loading"
