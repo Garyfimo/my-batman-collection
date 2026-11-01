@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.garyfimo.batmancollection.data.Batman
+import com.garyfimo.batmancollection.data.BatmanListResult
 import com.garyfimo.batmancollection.data.BatmanRepository
 import com.garyfimo.batmancollection.ui.home.HomeScreen
 import com.garyfimo.batmancollection.ui.home.HomeViewModel
@@ -37,7 +38,7 @@ class HomeScreenTest {
     @Test
     fun homeScreen_rendersItemFromRepository() {
         val repository: BatmanRepository = mockk()
-        coEvery { repository.list() } returns listOf(sampleBatman)
+        coEvery { repository.list() } returns BatmanListResult.Success(listOf(sampleBatman))
 
         composeRule.setContent {
             BatmanCollectionTheme {
@@ -59,7 +60,7 @@ class HomeScreenTest {
     @Test
     fun homeScreen_invokesCallbackWithIdOnItemClick() {
         val repository: BatmanRepository = mockk()
-        coEvery { repository.list() } returns listOf(sampleBatman)
+        coEvery { repository.list() } returns BatmanListResult.Success(listOf(sampleBatman))
         var clickedId: String? = null
 
         composeRule.setContent {

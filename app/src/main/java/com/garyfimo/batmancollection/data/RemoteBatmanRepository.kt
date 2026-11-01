@@ -1,7 +1,22 @@
 package com.garyfimo.batmancollection.data
 
-class RemoteBatmanRepository(private val api: BatmanApi) : BatmanRepository {
-    override suspend fun list(): List<Batman> = api.list()
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
 
-    override suspend fun get(id: String): Batman? = runCatching { api.get(id) }.getOrNull()
+class RemoteBatmanRepository(private val api: BatmanApi) : BatmanRepository {
+
+    override suspend fun list(): BatmanListResult = try {
+        BatmanListResult.Success(api.list())
+    } catch (t: Throwable) {
+        BatmanListResult.Failure(t)
+    }
+
+    override suspend fun get(id: String): BatmanLookup = try {
+        BatmanLookup.Found(api.get(id))
+    } catch (e: ClientRequestException) {
+        if (e.response.status == HttpStatusCode.NotFound) BatmanLookup.NotFound
+        else BatmanLookup.Failure(e)
+    } catch (t: Throwable) {
+        BatmanLookup.Failure(t)
+    }
 }

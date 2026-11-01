@@ -3,6 +3,7 @@ package com.garyfimo.batmancollection.ui.details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.garyfimo.batmancollection.data.Batman
+import com.garyfimo.batmancollection.data.BatmanLookup
 import com.garyfimo.batmancollection.data.BatmanRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,14 +32,12 @@ class DetailsViewModel(
     private fun load() {
         viewModelScope.launch {
             _state.value = DetailsUiState.Loading
-            _state.value = runCatching { repository.get(id) }
-                .fold(
-                    onSuccess = { batman ->
-                        if (batman == null) DetailsUiState.NotFound
-                        else DetailsUiState.Ready(batman)
-                    },
-                    onFailure = { DetailsUiState.Error(it.message ?: "Unknown error") },
-                )
+            _state.value = when (val result = repository.get(id)) {
+                is BatmanLookup.Found -> DetailsUiState.Ready(result.batman)
+                BatmanLookup.NotFound -> DetailsUiState.NotFound
+                is BatmanLookup.Failure ->
+                    DetailsUiState.Error(result.cause.message ?: "Unknown error")
+            }
         }
     }
 }

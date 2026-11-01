@@ -7,13 +7,14 @@ class MockBatmanRepository(
     private val latencyMillis: Long = 300L,
 ) : BatmanRepository {
 
-    override suspend fun list(): List<Batman> {
+    override suspend fun list(): BatmanListResult {
         delay(latencyMillis)
-        return source
+        return BatmanListResult.Success(source)
     }
 
-    override suspend fun get(id: String): Batman? {
+    override suspend fun get(id: String): BatmanLookup {
         delay(latencyMillis)
-        return source.firstOrNull { it.id == id }
+        val match = source.firstOrNull { it.id == id }
+        return if (match != null) BatmanLookup.Found(match) else BatmanLookup.NotFound
     }
 }
