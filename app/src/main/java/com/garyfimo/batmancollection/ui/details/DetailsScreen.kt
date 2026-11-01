@@ -43,7 +43,7 @@ import org.koin.core.parameter.parametersOf
 fun DetailsScreen(
     id: String,
     onBack: () -> Unit,
-    viewModel: DetailsViewModel = koinViewModel { parametersOf(id) },
+    viewModel: DetailsViewModel = koinViewModel(key = id) { parametersOf(id) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
