@@ -15,3 +15,8 @@ sealed interface FigureAddResult {
     data class Success(val id: String) : FigureAddResult
     data class Failure(val cause: Throwable) : FigureAddResult
 }
+
+sealed interface FigureRemoveResult {
+    data object Success : FigureRemoveResult
+    data class Failure(val cause: Throwable) : FigureRemoveResult
+}

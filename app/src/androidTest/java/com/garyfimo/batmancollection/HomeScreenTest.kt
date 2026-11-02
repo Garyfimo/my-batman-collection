@@ -46,7 +46,7 @@ class HomeScreenTest {
     )
 
     private fun fakeRepository(items: List<Figure> = listOf(sampleFigure)): FigureRepository =
-        mockk<FigureRepository>().also {
+        mockk<FigureRepository>(relaxed = true).also {
             every { it.observe() } returns flowOf(FigureListResult.Success(items))
         }
 
