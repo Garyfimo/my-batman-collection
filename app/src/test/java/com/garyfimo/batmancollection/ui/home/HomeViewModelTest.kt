@@ -51,6 +51,33 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `setFilter narrows visibleItems to the matching tipo`() = runTest(dispatcher) {
+        val funko = Figure("f1", FigureType.Funko, "The Batman", "1187", "")
+        val hw = Figure("h1", FigureType.HotWheels, "Batmobile", "103/250", "")
+        val otros = Figure("o1", FigureType.Otros, "Marcelo Wong", "-", "")
+        val items = listOf(funko, hw, otros)
+        coEvery { repository.list() } returns FigureListResult.Success(items)
+
+        val viewModel = HomeViewModel(repository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(items, ready.visibleItems)
+
+            viewModel.setFilter(FigureType.HotWheels)
+            val filtered = awaitItem() as HomeUiState.Ready
+            assertEquals(listOf(hw), filtered.visibleItems)
+            assertEquals(FigureType.HotWheels, filtered.filter)
+
+            viewModel.setFilter(null)
+            val cleared = awaitItem() as HomeUiState.Ready
+            assertEquals(items, cleared.visibleItems)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `emits Error state when repository returns Failure`() = runTest(dispatcher) {
         coEvery { repository.list() } returns
             FigureListResult.Failure(IllegalStateException("boom"))
