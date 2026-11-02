@@ -2,6 +2,7 @@ package com.garyfimo.batmancollection
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -106,10 +107,15 @@ class BatmanNavDisplayTest {
         }
 
         composeRule.onNodeWithTag("$TAG_HOME_ITEM_PREFIX${mobile.id}").performClick()
-
+        // Drain the Nav3 enter transition and the DetailsViewModel coroutine on v2's
+        // StandardTestDispatcher before asserting.
+        composeRule.waitForIdle()
+        // TAG_DETAILS_CONTENT only renders in the Ready state, so it's a true signal
+        // that both nav AND the VM resolved — unlike figure fields that also appear
+        // on the Home row.
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
-                .onAllNodesWithText(mobile.serie)
+                .onAllNodesWithTag(TAG_DETAILS_CONTENT)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
@@ -125,17 +131,19 @@ class BatmanNavDisplayTest {
         }
 
         composeRule.onNodeWithTag("$TAG_HOME_ITEM_PREFIX${bruce.id}").performClick()
+        composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
-                .onAllNodesWithText(bruce.serie)
+                .onAllNodesWithTag(TAG_DETAILS_CONTENT)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
         composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.waitForIdle()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
-                .onAllNodesWithText(mobile.nombre)
+                .onAllNodesWithTag(TAG_HOME_ROOT)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
