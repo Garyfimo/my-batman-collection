@@ -138,16 +138,6 @@ fun AddFigureScreen(
             ) {
                 Text(if (state.submitting) "Submitting..." else "Submit")
             }
-
-            OutlinedButton(
-                onClick = viewModel::clear,
-                enabled = !state.submitting,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TAG_ADD_CLEAR),
-            ) {
-                Text("Clear form")
-            }
         }
     }
 }
@@ -283,4 +273,3 @@ const val TAG_ADD_SERIE = "add.serie"
 const val TAG_ADD_IMAGE_PREVIEW = "add.image.preview"
 const val TAG_ADD_ADD_FILE = "add.image.add"
 const val TAG_ADD_SUBMIT = "add.submit"
-const val TAG_ADD_CLEAR = "add.clear"

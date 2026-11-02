@@ -65,10 +65,6 @@ class AddFigureViewModel : ViewModel() {
         _state.value = _state.value.copy(imageUri = uri)
     }
 
-    fun clear() {
-        _state.value = AddFigureFormState()
-    }
-
     fun submit() {
         val current = _state.value.copy(submitAttempted = true)
         _state.value = current
