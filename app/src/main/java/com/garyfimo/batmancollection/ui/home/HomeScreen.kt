@@ -21,9 +21,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -55,6 +59,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     onItemClick: (String) -> Unit,
+    onAddFigure: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -81,6 +86,14 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             topBar = { TopAppBar(title = { Text("Batman Collection") }) },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = onAddFigure,
+                    modifier = Modifier.testTag(TAG_HOME_ADD_FAB),
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add figure")
+                }
+            },
         ) { padding ->
             Box(
                 modifier = Modifier
@@ -255,6 +268,7 @@ private const val POPUP_BOUNDS_STIFFNESS = 237f
 private const val POPUP_FADE_MILLIS = 286
 private const val POPUP_GRACE_MILLIS = 100L
 
+const val TAG_HOME_ADD_FAB = "home.add"
 const val TAG_HOME_ROOT = "home.root"
 const val TAG_HOME_LOADING = "home.loading"
 const val TAG_HOME_ERROR = "home.error"
