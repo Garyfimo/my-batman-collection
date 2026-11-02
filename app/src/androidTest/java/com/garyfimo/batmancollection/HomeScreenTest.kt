@@ -1,5 +1,6 @@
 package com.garyfimo.batmancollection
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -65,7 +66,8 @@ class HomeScreenTest {
         composeRule.onNodeWithTag(TAG_HOME_ROOT).assertIsDisplayed()
         waitForItem(sampleFigure.nombre)
         composeRule.onNodeWithText(sampleFigure.nombre).assertIsDisplayed()
-        composeRule.onNodeWithText(sampleFigure.tipo.label).assertIsDisplayed()
+        // tipo.label renders twice: once as a FilterChip, once as the list row overline.
+        composeRule.onAllNodesWithText(sampleFigure.tipo.label).assertCountEquals(2)
         composeRule.onNodeWithText(sampleFigure.serie).assertIsDisplayed()
     }
 
