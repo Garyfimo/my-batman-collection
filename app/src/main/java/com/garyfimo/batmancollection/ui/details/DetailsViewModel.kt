@@ -2,9 +2,9 @@ package com.garyfimo.batmancollection.ui.details
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.garyfimo.batmancollection.data.Batman
-import com.garyfimo.batmancollection.data.BatmanLookup
-import com.garyfimo.batmancollection.data.BatmanRepository
+import com.garyfimo.batmancollection.data.Figure
+import com.garyfimo.batmancollection.data.FigureLookup
+import com.garyfimo.batmancollection.data.FigureRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,14 +12,14 @@ import kotlinx.coroutines.launch
 
 sealed interface DetailsUiState {
     data object Loading : DetailsUiState
-    data class Ready(val batman: Batman) : DetailsUiState
+    data class Ready(val figure: Figure) : DetailsUiState
     data object NotFound : DetailsUiState
     data class Error(val message: String) : DetailsUiState
 }
 
 class DetailsViewModel(
     private val id: String,
-    private val repository: BatmanRepository,
+    private val repository: FigureRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<DetailsUiState>(DetailsUiState.Loading)
@@ -33,9 +33,9 @@ class DetailsViewModel(
         viewModelScope.launch {
             _state.value = DetailsUiState.Loading
             _state.value = when (val result = repository.get(id)) {
-                is BatmanLookup.Found -> DetailsUiState.Ready(result.batman)
-                BatmanLookup.NotFound -> DetailsUiState.NotFound
-                is BatmanLookup.Failure ->
+                is FigureLookup.Found -> DetailsUiState.Ready(result.figure)
+                FigureLookup.NotFound -> DetailsUiState.NotFound
+                is FigureLookup.Failure ->
                     DetailsUiState.Error(result.cause.message ?: "Unknown error")
             }
         }

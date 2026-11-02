@@ -1,0 +1,9 @@
+package com.garyfimo.batmancollection.data
+
+data class Figure(
+    val id: String,
+    val tipo: FigureType,
+    val nombre: String,
+    val serie: String,
+    val imageUrl: String,
+)

@@ -85,6 +85,9 @@ dependencies {
 
     val firebaseBom = platform(libs.firebase.bom)
     implementation(firebaseBom)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     val koinBom = platform(libs.koin.bom)
     implementation(koinBom)
