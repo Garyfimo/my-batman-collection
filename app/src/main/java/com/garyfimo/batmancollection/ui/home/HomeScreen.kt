@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
-import com.garyfimo.batmancollection.data.Batman
+import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.navigation.LocalSharedTransitionScope
 import com.garyfimo.batmancollection.navigation.batmanImageSharedKey
 import com.garyfimo.batmancollection.navigation.batmanPopupImageKey
@@ -63,19 +63,19 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // selectedBatman is the live selection; lastSelectedBatman keeps the previously
+    // selectedFigure is the live selection; lastSelectedFigure keeps the previously
     // selected one alive during the overlay's exit animation so the shared-element
     // morph has content to animate back from.
-    var selectedBatman by remember { mutableStateOf<Batman?>(null) }
-    var lastSelectedBatman by remember { mutableStateOf<Batman?>(null) }
-    selectedBatman?.let { lastSelectedBatman = it }
+    var selectedFigure by remember { mutableStateOf<Figure?>(null) }
+    var lastSelectedFigure by remember { mutableStateOf<Figure?>(null) }
+    selectedFigure?.let { lastSelectedFigure = it }
     // Gate the thumbnail's popup shared-element modifier: it must be attached while
     // the popup is open AND through the exit animation, then detached so a later
     // detail-nav transition doesn't inherit a stale caller-managed "visible = true"
     // state (which would hold the thumbnail in the shared-transition overlay layer).
     var popupActive by remember { mutableStateOf(false) }
-    LaunchedEffect(selectedBatman) {
-        if (selectedBatman != null) {
+    LaunchedEffect(selectedFigure) {
+        if (selectedFigure != null) {
             popupActive = true
         } else if (popupActive) {
             delay(POPUP_FADE_MILLIS.toLong() + POPUP_GRACE_MILLIS)
@@ -116,13 +116,13 @@ fun HomeScreen(
                             .testTag(TAG_HOME_LIST),
                         verticalArrangement = Arrangement.Top,
                     ) {
-                        items(s.items, key = { it.id }) { batman ->
-                            BatmanRow(
-                                batman = batman,
-                                isExpanded = selectedBatman?.id == batman.id,
+                        items(s.items, key = { it.id }) { figure ->
+                            FigureRow(
+                                figure = figure,
+                                isExpanded = selectedFigure?.id == figure.id,
                                 popupActive = popupActive,
-                                onRowClick = { onItemClick(batman.id) },
-                                onImageClick = { selectedBatman = batman },
+                                onRowClick = { onItemClick(figure.id) },
+                                onImageClick = { selectedFigure = figure },
                             )
                             HorizontalDivider()
                         }
@@ -132,17 +132,17 @@ fun HomeScreen(
         }
 
         AnimatedVisibility(
-            visible = selectedBatman != null,
+            visible = selectedFigure != null,
             enter = fadeIn(animationSpec = tween(POPUP_FADE_MILLIS)),
             exit = fadeOut(animationSpec = tween(POPUP_FADE_MILLIS)),
             modifier = Modifier.fillMaxSize(),
         ) {
-            val batman = lastSelectedBatman ?: return@AnimatedVisibility
-            BackHandler(enabled = selectedBatman != null) { selectedBatman = null }
+            val figure = lastSelectedFigure ?: return@AnimatedVisibility
+            BackHandler(enabled = selectedFigure != null) { selectedFigure = null }
             ExpandedImageOverlay(
-                batman = batman,
-                visibleAsTarget = selectedBatman?.id == batman.id,
-                onDismiss = { selectedBatman = null },
+                figure = figure,
+                visibleAsTarget = selectedFigure?.id == figure.id,
+                onDismiss = { selectedFigure = null },
             )
         }
     }
@@ -150,8 +150,8 @@ fun HomeScreen(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun BatmanRow(
-    batman: Batman,
+private fun FigureRow(
+    figure: Figure,
     isExpanded: Boolean,
     popupActive: Boolean,
     onRowClick: () -> Unit,
@@ -164,12 +164,12 @@ private fun BatmanRow(
     val thumbnailModifier = if (sharedScope != null) {
         with(sharedScope) {
             val navScoped = thumbnailBase.sharedElement(
-                sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
+                sharedContentState = rememberSharedContentState(batmanImageSharedKey(figure.id)),
                 animatedVisibilityScope = LocalNavAnimatedContentScope.current,
             )
             if (popupActive) {
                 navScoped.sharedElementWithCallerManagedVisibility(
-                    sharedContentState = rememberSharedContentState(batmanPopupImageKey(batman.id)),
+                    sharedContentState = rememberSharedContentState(batmanPopupImageKey(figure.id)),
                     visible = !isExpanded,
                     boundsTransform = { _, _ -> popupBoundsSpring() },
                 )
@@ -184,28 +184,28 @@ private fun BatmanRow(
     ListItem(
         leadingContent = {
             AsyncImage(
-                model = batman.imageUrl,
+                model = figure.imageUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = thumbnailModifier
                     .clickable(onClick = onImageClick)
-                    .testTag("$TAG_HOME_THUMB_PREFIX${batman.id}"),
+                    .testTag("$TAG_HOME_THUMB_PREFIX${figure.id}"),
             )
         },
-        overlineContent = { Text(batman.era) },
-        headlineContent = { Text(batman.name) },
-        supportingContent = { Text(batman.alterEgo) },
+        overlineContent = { Text(figure.tipo.label) },
+        headlineContent = { Text(figure.nombre) },
+        supportingContent = { Text(figure.serie) },
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onRowClick)
-            .testTag("$TAG_HOME_ITEM_PREFIX${batman.id}"),
+            .testTag("$TAG_HOME_ITEM_PREFIX${figure.id}"),
     )
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExpandedImageOverlay(
-    batman: Batman,
+    figure: Figure,
     visibleAsTarget: Boolean,
     onDismiss: () -> Unit,
 ) {
@@ -221,7 +221,7 @@ private fun ExpandedImageOverlay(
     val imageModifier = if (sharedScope != null) {
         with(sharedScope) {
             base.sharedElementWithCallerManagedVisibility(
-                sharedContentState = rememberSharedContentState(batmanPopupImageKey(batman.id)),
+                sharedContentState = rememberSharedContentState(batmanPopupImageKey(figure.id)),
                 visible = visibleAsTarget,
                 boundsTransform = { _, _ -> popupBoundsSpring() },
             )
@@ -243,8 +243,8 @@ private fun ExpandedImageOverlay(
         contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
-            model = batman.imageUrl,
-            contentDescription = "${batman.name} — ${batman.alterEgo}",
+            model = figure.imageUrl,
+            contentDescription = "${figure.nombre} — ${figure.tipo.label}",
             contentScale = ContentScale.Fit,
             modifier = imageModifier
                 .clickable(
