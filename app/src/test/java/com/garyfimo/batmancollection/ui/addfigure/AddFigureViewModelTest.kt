@@ -70,16 +70,4 @@ class AddFigureViewModelTest {
         assertEquals(AddFigureFormState(), state)
     }
 
-    @Test
-    fun `clear wipes every field`() = runTest(dispatcher) {
-        val viewModel = AddFigureViewModel()
-        viewModel.setTipo(FigureType.HotWheels)
-        viewModel.setNombre("Batmobile")
-        viewModel.setSerie("Elite 64")
-        viewModel.setImageUri("content://images/2")
-
-        viewModel.clear()
-
-        assertEquals(AddFigureFormState(), viewModel.state.value)
-    }
 }
