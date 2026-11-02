@@ -6,11 +6,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +29,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -89,6 +88,20 @@ fun AddFigureScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            Surface(tonalElevation = 3.dp) {
+                Button(
+                    onClick = viewModel::submit,
+                    enabled = state.isValid && !state.submitting,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .testTag(TAG_ADD_SUBMIT),
+                ) {
+                    Text(if (state.submitting) "Submitting..." else "Submit")
+                }
+            }
+        },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -126,18 +139,6 @@ fun AddFigureScreen(
                 errorText = state.imageError,
                 onImagePicked = viewModel::setImageUri,
             )
-
-            Spacer(Modifier.height(8.dp))
-
-            Button(
-                onClick = viewModel::submit,
-                enabled = !state.submitting,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(TAG_ADD_SUBMIT),
-            ) {
-                Text(if (state.submitting) "Submitting..." else "Submit")
-            }
         }
     }
 }
