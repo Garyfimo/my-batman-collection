@@ -34,6 +34,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -56,6 +57,7 @@ import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
 import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.data.FigureType
+import com.garyfimo.batmancollection.data.canAddFigures
 import com.garyfimo.batmancollection.navigation.LocalSharedTransitionScope
 import com.garyfimo.batmancollection.navigation.batmanImageSharedKey
 import com.garyfimo.batmancollection.navigation.batmanPopupImageKey
@@ -66,9 +68,12 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(
     onItemClick: (String) -> Unit,
     onAddFigure: () -> Unit = {},
+    onSignIn: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val canAdd = authState.canAddFigures()
     // selectedFigure is the live selection; lastSelectedFigure keeps the previously
     // selected one alive during the overlay's exit animation so the shared-element
     // morph has content to animate back from.
@@ -91,13 +96,32 @@ fun HomeScreen(
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(
-            topBar = { TopAppBar(title = { Text("Batman Collection") }) },
+            topBar = {
+                TopAppBar(
+                    title = { Text("Batman Collection") },
+                    actions = {
+                        if (authState is com.garyfimo.batmancollection.data.AuthState.SignedIn) {
+                            TextButton(
+                                onClick = viewModel::signOut,
+                                modifier = Modifier.testTag(TAG_HOME_SIGN_OUT),
+                            ) { Text("Sign out") }
+                        } else {
+                            TextButton(
+                                onClick = onSignIn,
+                                modifier = Modifier.testTag(TAG_HOME_SIGN_IN),
+                            ) { Text("Sign in") }
+                        }
+                    },
+                )
+            },
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onAddFigure,
-                    modifier = Modifier.testTag(TAG_HOME_ADD_FAB),
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add figure")
+                if (canAdd) {
+                    FloatingActionButton(
+                        onClick = onAddFigure,
+                        modifier = Modifier.testTag(TAG_HOME_ADD_FAB),
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add figure")
+                    }
                 }
             },
         ) { padding ->
@@ -313,6 +337,8 @@ private const val POPUP_FADE_MILLIS = 286
 private const val POPUP_GRACE_MILLIS = 100L
 
 const val TAG_HOME_ADD_FAB = "home.add"
+const val TAG_HOME_SIGN_IN = "home.sign_in"
+const val TAG_HOME_SIGN_OUT = "home.sign_out"
 const val TAG_HOME_ROOT = "home.root"
 const val TAG_HOME_LOADING = "home.loading"
 const val TAG_HOME_ERROR = "home.error"

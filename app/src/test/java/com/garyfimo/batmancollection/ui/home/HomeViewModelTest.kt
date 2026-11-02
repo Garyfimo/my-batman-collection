@@ -1,12 +1,16 @@
 package com.garyfimo.batmancollection.ui.home
 
 import app.cash.turbine.test
+import com.garyfimo.batmancollection.data.AuthRepository
+import com.garyfimo.batmancollection.data.AuthState
 import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.data.FigureListResult
 import com.garyfimo.batmancollection.data.FigureRepository
 import com.garyfimo.batmancollection.data.FigureType
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -24,6 +28,9 @@ class HomeViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val repository: FigureRepository = mockk()
+    private val authRepository: AuthRepository = mockk<AuthRepository>().also {
+        every { it.state } returns MutableStateFlow<AuthState>(AuthState.SignedOut)
+    }
 
     @Before fun setUp() { Dispatchers.setMain(dispatcher) }
     @After fun tearDown() { Dispatchers.resetMain() }
@@ -41,7 +48,7 @@ class HomeViewModelTest {
         )
         coEvery { repository.list() } returns FigureListResult.Success(items)
 
-        val viewModel = HomeViewModel(repository)
+        val viewModel = HomeViewModel(repository, authRepository)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -58,7 +65,7 @@ class HomeViewModelTest {
         val items = listOf(funko, hw, otros)
         coEvery { repository.list() } returns FigureListResult.Success(items)
 
-        val viewModel = HomeViewModel(repository)
+        val viewModel = HomeViewModel(repository, authRepository)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -82,7 +89,7 @@ class HomeViewModelTest {
         coEvery { repository.list() } returns
             FigureListResult.Failure(IllegalStateException("boom"))
 
-        val viewModel = HomeViewModel(repository)
+        val viewModel = HomeViewModel(repository, authRepository)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
