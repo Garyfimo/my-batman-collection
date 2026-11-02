@@ -24,9 +24,10 @@ import com.garyfimo.batmancollection.ui.theme.BatmanCollectionTheme
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.koin.compose.KoinApplication
+import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -52,37 +53,38 @@ class BatmanNavDisplayTest {
         imageUrl = "https://example.com/batmobile.jpg",
     )
 
+    // Replace whatever BatmanApp.onCreate started with a test-only Koin instance so
+    // koinViewModel() always resolves the mocked repository, no matter whether it
+    // reads from the LocalKoinApplication composable scope or the global one.
+    @Before
+    fun setUp() {
+        runCatching { stopKoin() }
+        val repository: FigureRepository = mockk<FigureRepository>().also {
+            coEvery { it.list() } returns FigureListResult.Success(listOf(bruce, mobile))
+            coEvery { it.get(bruce.id) } returns FigureLookup.Found(bruce)
+            coEvery { it.get(mobile.id) } returns FigureLookup.Found(mobile)
+        }
+        startKoin {
+            modules(
+                module {
+                    single<FigureRepository> { repository }
+                    viewModelOf(::HomeViewModel)
+                    viewModel { (id: String) -> DetailsViewModel(id = id, repository = get()) }
+                    viewModelOf(::AddFigureViewModel)
+                },
+            )
+        }
+    }
+
     @After
     fun tearDown() {
         stopKoin()
     }
 
-    private fun fakeRepository(): FigureRepository = mockk<FigureRepository>().also {
-        coEvery { it.list() } returns FigureListResult.Success(listOf(bruce, mobile))
-        coEvery { it.get(bruce.id) } returns FigureLookup.Found(bruce)
-        coEvery { it.get(mobile.id) } returns FigureLookup.Found(mobile)
-    }
-
-    @Suppress("DEPRECATION") // koinConfiguration DSL was added in Koin > 4.0.1
-    private fun start(repository: FigureRepository = fakeRepository()) {
+    private fun start() {
         composeRule.setContent {
-            KoinApplication(
-                application = {
-                    modules(
-                        module {
-                            single<FigureRepository> { repository }
-                            viewModelOf(::HomeViewModel)
-                            viewModel { (id: String) ->
-                                DetailsViewModel(id = id, repository = get())
-                            }
-                            viewModelOf(::AddFigureViewModel)
-                        },
-                    )
-                },
-            ) {
-                BatmanCollectionTheme {
-                    BatmanNavDisplay()
-                }
+            BatmanCollectionTheme {
+                BatmanNavDisplay()
             }
         }
     }
@@ -107,12 +109,7 @@ class BatmanNavDisplayTest {
         }
 
         composeRule.onNodeWithTag("$TAG_HOME_ITEM_PREFIX${mobile.id}").performClick()
-        // Drain the Nav3 enter transition and the DetailsViewModel coroutine on v2's
-        // StandardTestDispatcher before asserting.
         composeRule.waitForIdle()
-        // TAG_DETAILS_CONTENT only renders in the Ready state, so it's a true signal
-        // that both nav AND the VM resolved — unlike figure fields that also appear
-        // on the Home row.
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
                 .onAllNodesWithTag(TAG_DETAILS_CONTENT)
