@@ -8,3 +8,6 @@ data object HomeKey : NavKey
 
 @Serializable
 data class DetailsKey(val id: String) : NavKey
+
+@Serializable
+data object AddFigureKey : NavKey
