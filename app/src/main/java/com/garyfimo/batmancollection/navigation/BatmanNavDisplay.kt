@@ -10,6 +10,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.garyfimo.batmancollection.ui.addfigure.AddFigureScreen
 import com.garyfimo.batmancollection.ui.details.DetailsScreen
 import com.garyfimo.batmancollection.ui.home.HomeScreen
+import com.garyfimo.batmancollection.ui.login.LoginScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -26,6 +27,7 @@ fun BatmanNavDisplay() {
                         HomeScreen(
                             onItemClick = { id -> backStack.add(DetailsKey(id)) },
                             onAddFigure = { backStack.add(AddFigureKey) },
+                            onSignIn = { backStack.add(LoginKey) },
                         )
                     }
                     entry<DetailsKey> { key ->
@@ -36,6 +38,11 @@ fun BatmanNavDisplay() {
                     }
                     entry<AddFigureKey> {
                         AddFigureScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
+                    entry<LoginKey> {
+                        LoginScreen(
                             onBack = { backStack.removeLastOrNull() },
                         )
                     }

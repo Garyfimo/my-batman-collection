@@ -11,3 +11,6 @@ data class DetailsKey(val id: String) : NavKey
 
 @Serializable
 data object AddFigureKey : NavKey
+
+@Serializable
+data object LoginKey : NavKey

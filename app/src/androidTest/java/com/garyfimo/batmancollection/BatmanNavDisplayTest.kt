@@ -11,6 +11,8 @@ import androidx.compose.ui.test.performClick
 import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.data.FigureListResult
 import com.garyfimo.batmancollection.data.FigureLookup
+import com.garyfimo.batmancollection.data.AuthRepository
+import com.garyfimo.batmancollection.data.AuthState
 import com.garyfimo.batmancollection.data.FigureRepository
 import com.garyfimo.batmancollection.data.FigureType
 import com.garyfimo.batmancollection.navigation.BatmanNavDisplay
@@ -21,8 +23,11 @@ import com.garyfimo.batmancollection.ui.home.HomeViewModel
 import com.garyfimo.batmancollection.ui.home.TAG_HOME_ITEM_PREFIX
 import com.garyfimo.batmancollection.ui.home.TAG_HOME_ROOT
 import com.garyfimo.batmancollection.ui.theme.BatmanCollectionTheme
+import com.garyfimo.batmancollection.ui.login.LoginViewModel
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -68,9 +73,15 @@ class BatmanNavDisplayTest {
             modules(
                 module {
                     single<FigureRepository> { repository }
+                    single<AuthRepository> {
+                        mockk<AuthRepository>().also {
+                            every { it.state } returns MutableStateFlow<AuthState>(AuthState.SignedOut)
+                        }
+                    }
                     viewModelOf(::HomeViewModel)
                     viewModel { (id: String) -> DetailsViewModel(id = id, repository = get()) }
                     viewModelOf(::AddFigureViewModel)
+                    viewModelOf(::LoginViewModel)
                 },
             )
         }
