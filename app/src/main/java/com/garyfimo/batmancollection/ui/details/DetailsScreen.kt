@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
-import com.garyfimo.batmancollection.data.Batman
+import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.navigation.LocalSharedTransitionScope
 import com.garyfimo.batmancollection.navigation.batmanImageSharedKey
 import org.koin.androidx.compose.koinViewModel
@@ -77,14 +77,14 @@ fun DetailsScreen(
                     Modifier.testTag(TAG_DETAILS_LOADING),
                 )
                 DetailsUiState.NotFound -> Text(
-                    text = "No Batman with id \"$id\".",
+                    text = "No figure with id \"$id\".",
                     modifier = Modifier.testTag(TAG_DETAILS_NOT_FOUND),
                 )
                 is DetailsUiState.Error -> Text(
                     text = s.message,
                     modifier = Modifier.testTag(TAG_DETAILS_ERROR),
                 )
-                is DetailsUiState.Ready -> BatmanDetails(s.batman)
+                is DetailsUiState.Ready -> FigureDetails(s.figure)
             }
         }
     }
@@ -92,7 +92,7 @@ fun DetailsScreen(
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun BatmanDetails(batman: Batman) {
+private fun FigureDetails(figure: Figure) {
     val sharedScope = LocalSharedTransitionScope.current
     val baseImageModifier = Modifier
         .fillMaxWidth()
@@ -101,7 +101,7 @@ private fun BatmanDetails(batman: Batman) {
     val imageModifier = if (sharedScope != null) {
         with(sharedScope) {
             baseImageModifier.sharedElement(
-                sharedContentState = rememberSharedContentState(batmanImageSharedKey(batman.id)),
+                sharedContentState = rememberSharedContentState(batmanImageSharedKey(figure.id)),
                 animatedVisibilityScope = LocalNavAnimatedContentScope.current,
             )
         }
@@ -118,20 +118,14 @@ private fun BatmanDetails(batman: Batman) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         AsyncImage(
-            model = batman.imageUrl,
-            contentDescription = "${batman.name} — ${batman.alterEgo}",
+            model = figure.imageUrl,
+            contentDescription = "${figure.nombre} — ${figure.tipo.label}",
             contentScale = ContentScale.Crop,
             modifier = imageModifier.testTag(TAG_DETAILS_IMAGE),
         )
-        Text(batman.name, style = MaterialTheme.typography.headlineMedium)
-        LabeledLine("Alter ego", batman.alterEgo)
-        LabeledLine("Era", batman.era)
-        LabeledLine("First appearance", batman.firstAppearance)
-        Text(
-            text = batman.description,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(top = 8.dp),
-        )
+        Text(figure.nombre, style = MaterialTheme.typography.headlineMedium)
+        LabeledLine("Tipo", figure.tipo.label)
+        LabeledLine("Serie", figure.serie)
     }
 }
 
@@ -144,7 +138,7 @@ private fun LabeledLine(label: String, value: String) {
 }
 
 private fun title(state: DetailsUiState): String = when (state) {
-    is DetailsUiState.Ready -> state.batman.name
+    is DetailsUiState.Ready -> state.figure.nombre
     else -> "Details"
 }
 

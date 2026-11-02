@@ -1,5 +1,6 @@
 package com.garyfimo.batmancollection
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -8,9 +9,10 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.garyfimo.batmancollection.data.Batman
-import com.garyfimo.batmancollection.data.BatmanLookup
-import com.garyfimo.batmancollection.data.BatmanRepository
+import com.garyfimo.batmancollection.data.Figure
+import com.garyfimo.batmancollection.data.FigureLookup
+import com.garyfimo.batmancollection.data.FigureRepository
+import com.garyfimo.batmancollection.data.FigureType
 import com.garyfimo.batmancollection.ui.details.DetailsScreen
 import com.garyfimo.batmancollection.ui.details.DetailsViewModel
 import com.garyfimo.batmancollection.ui.details.TAG_DETAILS_CONTENT
@@ -31,21 +33,19 @@ class DetailsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val sampleBatman = Batman(
-        id = "bruce-wayne",
-        name = "Batman",
-        alterEgo = "Bruce Wayne",
-        era = "Modern Age",
-        firstAppearance = "Detective Comics #27 (1939)",
-        description = "The original Dark Knight.",
-        imageUrl = "https://example.com/bruce.jpg",
+    private val sampleFigure = Figure(
+        id = "funko-the-batman-1187",
+        tipo = FigureType.Funko,
+        nombre = "The Batman",
+        serie = "1187",
+        imageUrl = "https://example.com/1187.jpg",
     )
 
     private fun contentWith(viewModel: DetailsViewModel, onBack: () -> Unit = {}) {
         composeRule.setContent {
             BatmanCollectionTheme {
                 DetailsScreen(
-                    id = sampleBatman.id,
+                    id = sampleFigure.id,
                     onBack = onBack,
                     viewModel = viewModel,
                 )
@@ -55,12 +55,11 @@ class DetailsScreenTest {
 
     @Test
     fun detailsScreen_showsLoading_whileRepositoryIsPending() {
-        val repository: BatmanRepository = mockk()
-        // Suspend forever so the Loading state is observable.
-        val never = CompletableDeferred<BatmanLookup>()
-        coEvery { repository.get(sampleBatman.id) } coAnswers { never.await() }
+        val repository: FigureRepository = mockk()
+        val never = CompletableDeferred<FigureLookup>()
+        coEvery { repository.get(sampleFigure.id) } coAnswers { never.await() }
 
-        contentWith(DetailsViewModel(id = sampleBatman.id, repository = repository))
+        contentWith(DetailsViewModel(id = sampleFigure.id, repository = repository))
 
         composeRule.onNodeWithTag(TAG_DETAILS_ROOT).assertIsDisplayed()
         composeRule.onNodeWithTag(TAG_DETAILS_LOADING).assertIsDisplayed()
@@ -68,30 +67,30 @@ class DetailsScreenTest {
 
     @Test
     fun detailsScreen_showsReadyContent_whenFound() {
-        val repository: BatmanRepository = mockk()
-        coEvery { repository.get(sampleBatman.id) } returns BatmanLookup.Found(sampleBatman)
+        val repository: FigureRepository = mockk()
+        coEvery { repository.get(sampleFigure.id) } returns FigureLookup.Found(sampleFigure)
 
-        contentWith(DetailsViewModel(id = sampleBatman.id, repository = repository))
+        contentWith(DetailsViewModel(id = sampleFigure.id, repository = repository))
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
-                .onAllNodesWithText(sampleBatman.alterEgo)
+                .onAllNodesWithText(sampleFigure.serie)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
         composeRule.onNodeWithTag(TAG_DETAILS_CONTENT).assertIsDisplayed()
-        composeRule.onNodeWithText(sampleBatman.alterEgo).assertIsDisplayed()
-        composeRule.onNodeWithText(sampleBatman.era).assertIsDisplayed()
-        composeRule.onNodeWithText(sampleBatman.firstAppearance).assertIsDisplayed()
-        composeRule.onNodeWithText(sampleBatman.description).assertIsDisplayed()
+        // nombre renders twice: once in the TopAppBar title, once as the headline.
+        composeRule.onAllNodesWithText(sampleFigure.nombre).assertCountEquals(2)
+        composeRule.onNodeWithText(sampleFigure.tipo.label).assertIsDisplayed()
+        composeRule.onNodeWithText(sampleFigure.serie).assertIsDisplayed()
     }
 
     @Test
     fun detailsScreen_showsNotFound_whenRepositoryHasNoMatch() {
-        val repository: BatmanRepository = mockk()
-        coEvery { repository.get(sampleBatman.id) } returns BatmanLookup.NotFound
+        val repository: FigureRepository = mockk()
+        coEvery { repository.get(sampleFigure.id) } returns FigureLookup.NotFound
 
-        contentWith(DetailsViewModel(id = sampleBatman.id, repository = repository))
+        contentWith(DetailsViewModel(id = sampleFigure.id, repository = repository))
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
@@ -104,11 +103,11 @@ class DetailsScreenTest {
 
     @Test
     fun detailsScreen_showsError_whenRepositoryFails() {
-        val repository: BatmanRepository = mockk()
-        coEvery { repository.get(sampleBatman.id) } returns
-            BatmanLookup.Failure(IllegalStateException("boom"))
+        val repository: FigureRepository = mockk()
+        coEvery { repository.get(sampleFigure.id) } returns
+            FigureLookup.Failure(IllegalStateException("boom"))
 
-        contentWith(DetailsViewModel(id = sampleBatman.id, repository = repository))
+        contentWith(DetailsViewModel(id = sampleFigure.id, repository = repository))
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("boom").fetchSemanticsNodes().isNotEmpty()
@@ -118,12 +117,12 @@ class DetailsScreenTest {
 
     @Test
     fun detailsScreen_backIcon_invokesOnBack() {
-        val repository: BatmanRepository = mockk()
-        coEvery { repository.get(sampleBatman.id) } returns BatmanLookup.Found(sampleBatman)
+        val repository: FigureRepository = mockk()
+        coEvery { repository.get(sampleFigure.id) } returns FigureLookup.Found(sampleFigure)
         var backInvoked = false
 
         contentWith(
-            viewModel = DetailsViewModel(id = sampleBatman.id, repository = repository),
+            viewModel = DetailsViewModel(id = sampleFigure.id, repository = repository),
             onBack = { backInvoked = true },
         )
 
