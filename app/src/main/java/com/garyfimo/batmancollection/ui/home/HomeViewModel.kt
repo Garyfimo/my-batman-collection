@@ -2,6 +2,8 @@ package com.garyfimo.batmancollection.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.garyfimo.batmancollection.data.AuthRepository
+import com.garyfimo.batmancollection.data.AuthState
 import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.data.FigureListResult
 import com.garyfimo.batmancollection.data.FigureRepository
@@ -23,10 +25,15 @@ sealed interface HomeUiState {
     data class Error(val message: String) : HomeUiState
 }
 
-class HomeViewModel(private val repository: FigureRepository) : ViewModel() {
+class HomeViewModel(
+    private val repository: FigureRepository,
+    private val authRepository: AuthRepository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
+
+    val authState: StateFlow<AuthState> = authRepository.state
 
     init {
         load()
@@ -47,5 +54,9 @@ class HomeViewModel(private val repository: FigureRepository) : ViewModel() {
     fun setFilter(filter: FigureType?) {
         val current = _state.value as? HomeUiState.Ready ?: return
         _state.value = current.copy(filter = filter)
+    }
+
+    fun signOut() {
+        authRepository.signOut()
     }
 }
