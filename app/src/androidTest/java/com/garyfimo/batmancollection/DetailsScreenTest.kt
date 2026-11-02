@@ -1,7 +1,8 @@
 package com.garyfimo.batmancollection
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -78,7 +79,8 @@ class DetailsScreenTest {
                 .isNotEmpty()
         }
         composeRule.onNodeWithTag(TAG_DETAILS_CONTENT).assertIsDisplayed()
-        composeRule.onNodeWithText(sampleFigure.nombre).assertIsDisplayed()
+        // nombre renders twice: once in the TopAppBar title, once as the headline.
+        composeRule.onAllNodesWithText(sampleFigure.nombre).assertCountEquals(2)
         composeRule.onNodeWithText(sampleFigure.tipo.label).assertIsDisplayed()
         composeRule.onNodeWithText(sampleFigure.serie).assertIsDisplayed()
     }
