@@ -10,3 +10,8 @@ sealed interface FigureLookup {
     data object NotFound : FigureLookup
     data class Failure(val cause: Throwable) : FigureLookup
 }
+
+sealed interface FigureAddResult {
+    data class Success(val id: String) : FigureAddResult
+    data class Failure(val cause: Throwable) : FigureAddResult
+}

@@ -1,11 +1,15 @@
 package com.garyfimo.batmancollection.data
 
+import android.net.Uri
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
 class FirestoreFigureRepository(
     private val firestore: FirebaseFirestore,
+    private val storage: FirebaseStorage,
 ) : FigureRepository {
 
     override suspend fun list(): FigureListResult = try {
@@ -23,6 +27,33 @@ class FirestoreFigureRepository(
         }
     } catch (t: Throwable) {
         FigureLookup.Failure(t)
+    }
+
+    override suspend fun add(draft: FigureDraft): FigureAddResult = try {
+        // Reserve a Firestore doc id up front so the Storage path and the Firestore
+        // doc share it. Picking Firestore's auto-id instead of a slug-based one keeps
+        // the client write path collision-free and side-steps a "does this slug already
+        // exist?" round-trip.
+        val docRef = firestore.collection(COLLECTION).document()
+        val id = docRef.id
+
+        val imageRef = storage.reference.child("$COLLECTION/$id.jpg")
+        imageRef.putFile(Uri.parse(draft.imageUri)).await()
+        val downloadUrl = imageRef.downloadUrl.await().toString()
+
+        docRef.set(
+            mapOf(
+                "tipo" to draft.tipo.label,
+                "nombre" to draft.nombre,
+                "serie" to draft.serie,
+                "imageUrl" to downloadUrl,
+                "createdAt" to FieldValue.serverTimestamp(),
+            ),
+        ).await()
+
+        FigureAddResult.Success(id)
+    } catch (t: Throwable) {
+        FigureAddResult.Failure(t)
     }
 
     private fun DocumentSnapshot.toFigure(): Figure? {

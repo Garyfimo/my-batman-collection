@@ -2,7 +2,9 @@ package com.garyfimo.batmancollection.ui.addfigure
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.garyfimo.batmancollection.data.FigureAddResult
 import com.garyfimo.batmancollection.data.FigureDraft
+import com.garyfimo.batmancollection.data.FigureRepository
 import com.garyfimo.batmancollection.data.FigureType
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,7 +43,9 @@ sealed interface AddFigureEvent {
     data class SubmitFailed(val message: String) : AddFigureEvent
 }
 
-class AddFigureViewModel : ViewModel() {
+class AddFigureViewModel(
+    private val repository: FigureRepository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AddFigureFormState())
     val state: StateFlow<AddFigureFormState> = _state.asStateFlow()
@@ -78,11 +82,18 @@ class AddFigureViewModel : ViewModel() {
                 serie = current.serie.trim(),
                 imageUri = current.imageUri!!,
             )
-            // Template: the figure draft would be sent to a repository here.
-            // Keep the shape so callers can wire persistence later.
-            @Suppress("UNUSED_VARIABLE") val toPersist = draft
-            _state.value = AddFigureFormState()
-            _events.send(AddFigureEvent.Submitted)
+            when (val result = repository.add(draft)) {
+                is FigureAddResult.Success -> {
+                    _state.value = AddFigureFormState()
+                    _events.send(AddFigureEvent.Submitted)
+                }
+                is FigureAddResult.Failure -> {
+                    _state.value = current.copy(submitting = false)
+                    _events.send(
+                        AddFigureEvent.SubmitFailed(result.cause.message ?: "Failed to save"),
+                    )
+                }
+            }
         }
     }
 }
