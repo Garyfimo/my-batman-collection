@@ -11,13 +11,17 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -50,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
 import com.garyfimo.batmancollection.data.Figure
+import com.garyfimo.batmancollection.data.FigureType
 import com.garyfimo.batmancollection.navigation.LocalSharedTransitionScope
 import com.garyfimo.batmancollection.navigation.batmanImageSharedKey
 import com.garyfimo.batmancollection.navigation.batmanPopupImageKey
@@ -110,21 +116,29 @@ fun HomeScreen(
                         text = s.message,
                         modifier = Modifier.testTag(TAG_HOME_ERROR),
                     )
-                    is HomeUiState.Ready -> LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .testTag(TAG_HOME_LIST),
-                        verticalArrangement = Arrangement.Top,
+                    is HomeUiState.Ready -> Column(
+                        modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(s.items, key = { it.id }) { figure ->
-                            FigureRow(
-                                figure = figure,
-                                isExpanded = selectedFigure?.id == figure.id,
-                                popupActive = popupActive,
-                                onRowClick = { onItemClick(figure.id) },
-                                onImageClick = { selectedFigure = figure },
-                            )
-                            HorizontalDivider()
+                        FilterRow(
+                            selected = s.filter,
+                            onSelected = viewModel::setFilter,
+                        )
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .testTag(TAG_HOME_LIST),
+                            verticalArrangement = Arrangement.Top,
+                        ) {
+                            items(s.visibleItems, key = { it.id }) { figure ->
+                                FigureRow(
+                                    figure = figure,
+                                    isExpanded = selectedFigure?.id == figure.id,
+                                    popupActive = popupActive,
+                                    onRowClick = { onItemClick(figure.id) },
+                                    onImageClick = { selectedFigure = figure },
+                                )
+                                HorizontalDivider()
+                            }
                         }
                     }
                 }
@@ -143,6 +157,36 @@ fun HomeScreen(
                 figure = figure,
                 visibleAsTarget = selectedFigure?.id == figure.id,
                 onDismiss = { selectedFigure = null },
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilterRow(
+    selected: FigureType?,
+    onSelected: (FigureType?) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag(TAG_HOME_FILTER_ROW),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FilterChip(
+            selected = selected == null,
+            onClick = { onSelected(null) },
+            label = { Text("All") },
+            modifier = Modifier.testTag(TAG_HOME_FILTER_ALL),
+        )
+        FigureType.entries.forEach { tipo ->
+            FilterChip(
+                selected = selected == tipo,
+                onClick = { onSelected(tipo) },
+                label = { Text(tipo.label) },
+                modifier = Modifier.testTag("$TAG_HOME_FILTER_PREFIX${tipo.name}"),
             )
         }
     }
@@ -273,6 +317,9 @@ const val TAG_HOME_ROOT = "home.root"
 const val TAG_HOME_LOADING = "home.loading"
 const val TAG_HOME_ERROR = "home.error"
 const val TAG_HOME_LIST = "home.list"
+const val TAG_HOME_FILTER_ROW = "home.filter.row"
+const val TAG_HOME_FILTER_ALL = "home.filter.all"
+const val TAG_HOME_FILTER_PREFIX = "home.filter."
 const val TAG_HOME_ITEM_PREFIX = "home.item."
 const val TAG_HOME_THUMB_PREFIX = "home.thumb."
 const val TAG_HOME_OVERLAY = "home.overlay"
