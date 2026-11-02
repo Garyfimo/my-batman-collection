@@ -104,11 +104,15 @@ class BatmanNavDisplayTest {
     @Test
     fun navDisplay_tappingRow_navigatesToDetail_forThatId() {
         start()
+        composeRule.mainClock.autoAdvance = true
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText(mobile.nombre).fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithTag("$TAG_HOME_ITEM_PREFIX${mobile.id}").performClick()
+        // Give the Nav3 enter animation and the DetailsViewModel coroutine time to
+        // settle on v2's StandardTestDispatcher-backed clock.
+        composeRule.mainClock.advanceTimeBy(1_000L)
         composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
@@ -123,11 +127,13 @@ class BatmanNavDisplayTest {
     @Test
     fun navDisplay_backFromDetail_returnsToList() {
         start()
+        composeRule.mainClock.autoAdvance = true
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText(bruce.nombre).fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithTag("$TAG_HOME_ITEM_PREFIX${bruce.id}").performClick()
+        composeRule.mainClock.advanceTimeBy(1_000L)
         composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule
@@ -136,6 +142,7 @@ class BatmanNavDisplayTest {
                 .isNotEmpty()
         }
         composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.mainClock.advanceTimeBy(1_000L)
         composeRule.waitForIdle()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
