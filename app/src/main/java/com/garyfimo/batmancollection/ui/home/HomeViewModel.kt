@@ -36,17 +36,14 @@ class HomeViewModel(
     val authState: StateFlow<AuthState> = authRepository.state
 
     init {
-        load()
-    }
-
-    fun load() {
         viewModelScope.launch {
-            val previousFilter = (_state.value as? HomeUiState.Ready)?.filter
-            _state.value = HomeUiState.Loading
-            _state.value = when (val result = repository.list()) {
-                is FigureListResult.Success -> HomeUiState.Ready(result.items, previousFilter)
-                is FigureListResult.Failure ->
-                    HomeUiState.Error(result.cause.message ?: "Unknown error")
+            repository.observe().collect { result ->
+                val previousFilter = (_state.value as? HomeUiState.Ready)?.filter
+                _state.value = when (result) {
+                    is FigureListResult.Success -> HomeUiState.Ready(result.items, previousFilter)
+                    is FigureListResult.Failure ->
+                        HomeUiState.Error(result.cause.message ?: "Unknown error")
+                }
             }
         }
     }
