@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.garyfimo.batmancollection.ui.addfigure.AddFigureScreen
 import com.garyfimo.batmancollection.ui.details.DetailsScreen
 import com.garyfimo.batmancollection.ui.home.HomeScreen
 
@@ -24,11 +25,17 @@ fun BatmanNavDisplay() {
                     entry<HomeKey> {
                         HomeScreen(
                             onItemClick = { id -> backStack.add(DetailsKey(id)) },
+                            onAddFigure = { backStack.add(AddFigureKey) },
                         )
                     }
                     entry<DetailsKey> { key ->
                         DetailsScreen(
                             id = key.id,
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
+                    entry<AddFigureKey> {
+                        AddFigureScreen(
                             onBack = { backStack.removeLastOrNull() },
                         )
                     }
