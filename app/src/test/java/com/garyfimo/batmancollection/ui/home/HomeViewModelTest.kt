@@ -105,6 +105,91 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `default sort preserves the repository's input order`() = runTest(dispatcher) {
+        val b = Figure("1", FigureType.Funko, "Batman", "1187", "")
+        val a = Figure("2", FigureType.Funko, "Alfred", "202", "")
+        val c = Figure("3", FigureType.Funko, "Catwoman", "203", "")
+        // Repo returns these in a specific order; CreatedAt sort must not re-sort.
+        every { repository.observe() } returns flowOf(FigureListResult.Success(listOf(b, a, c)))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(listOf(b, a, c), ready.visibleItems)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setSort Name orders alphabetically ignoring case`() = runTest(dispatcher) {
+        val items = listOf(
+            Figure("1", FigureType.Funko, "zatanna", "1", ""),
+            Figure("2", FigureType.Funko, "Batman", "2", ""),
+            Figure("3", FigureType.Funko, "alfred", "3", ""),
+        )
+        every { repository.observe() } returns flowOf(FigureListResult.Success(items))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            awaitItem()
+            viewModel.setSort(HomeSort.Name)
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(listOf("alfred", "Batman", "zatanna"), ready.visibleItems.map { it.nombre })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setSort Type groups by tipo and then by name`() = runTest(dispatcher) {
+        val items = listOf(
+            Figure("1", FigureType.Otros, "Wong", "-", ""),
+            Figure("2", FigureType.Funko, "Batman", "1187", ""),
+            Figure("3", FigureType.HotWheels, "Batmobile", "103/250", ""),
+            Figure("4", FigureType.Funko, "Alfred", "202", ""),
+        )
+        every { repository.observe() } returns flowOf(FigureListResult.Success(items))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            awaitItem()
+            viewModel.setSort(HomeSort.Type)
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(
+                listOf("Alfred", "Batman", "Batmobile", "Wong"),
+                ready.visibleItems.map { it.nombre },
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setSort Serie orders alphabetically`() = runTest(dispatcher) {
+        val items = listOf(
+            Figure("1", FigureType.Funko, "A", "zeta", ""),
+            Figure("2", FigureType.Funko, "B", "alpha", ""),
+            Figure("3", FigureType.Funko, "C", "Beta", ""),
+        )
+        every { repository.observe() } returns flowOf(FigureListResult.Success(items))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            awaitItem()
+            viewModel.setSort(HomeSort.Serie)
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(listOf("alpha", "Beta", "zeta"), ready.visibleItems.map { it.serie })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `remove delegates to repository and emits nothing on success`() = runTest(dispatcher) {
         every { repository.observe() } returns flowOf(FigureListResult.Success(emptyList()))
         coEvery { repository.remove("abc") } returns FigureRemoveResult.Success

@@ -16,12 +16,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
+enum class HomeSort(val label: String) {
+    CreatedAt("Date added"),
+    Name("Name"),
+    Type("Type"),
+    Serie("Series"),
+}
+
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data class Ready(
         val items: List<Figure>,
         val filter: FigureType? = null,
         val query: String = "",
+        val sort: HomeSort = HomeSort.CreatedAt,
     ) : HomeUiState {
         val visibleItems: List<Figure> = items
             .let { base -> if (filter == null) base else base.filter { it.tipo == filter } }
@@ -34,6 +42,19 @@ sealed interface HomeUiState {
                         it.nombre.contains(needle, ignoreCase = true) ||
                             it.serie.contains(needle, ignoreCase = true)
                     }
+                }
+            }
+            .let { byFilters ->
+                when (sort) {
+                    // CreatedAt relies on the Firestore query's own orderBy, so the
+                    // repo-provided order is already what we want — don't re-sort and
+                    // risk losing stable ordering for figures with equal timestamps.
+                    HomeSort.CreatedAt -> byFilters
+                    HomeSort.Name -> byFilters.sortedBy { it.nombre.lowercase() }
+                    HomeSort.Type -> byFilters.sortedWith(
+                        compareBy({ it.tipo.ordinal }, { it.nombre.lowercase() }),
+                    )
+                    HomeSort.Serie -> byFilters.sortedBy { it.serie.lowercase() }
                 }
             }
     }
@@ -66,6 +87,7 @@ class HomeViewModel(
                         items = result.items,
                         filter = previous?.filter,
                         query = previous?.query.orEmpty(),
+                        sort = previous?.sort ?: HomeSort.CreatedAt,
                     )
                     is FigureListResult.Failure ->
                         HomeUiState.Error(result.cause.message ?: "Unknown error")
@@ -82,6 +104,11 @@ class HomeViewModel(
     fun setQuery(query: String) {
         val current = _state.value as? HomeUiState.Ready ?: return
         _state.value = current.copy(query = query)
+    }
+
+    fun setSort(sort: HomeSort) {
+        val current = _state.value as? HomeUiState.Ready ?: return
+        _state.value = current.copy(sort = sort)
     }
 
     fun remove(id: String) {
