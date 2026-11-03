@@ -3,6 +3,7 @@ package com.garyfimo.batmancollection.ui.home
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -10,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -17,16 +19,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -34,6 +40,9 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,14 +52,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
@@ -61,6 +76,7 @@ import com.garyfimo.batmancollection.data.canAddFigures
 import com.garyfimo.batmancollection.navigation.LocalSharedTransitionScope
 import com.garyfimo.batmancollection.navigation.batmanImageSharedKey
 import com.garyfimo.batmancollection.navigation.batmanPopupImageKey
+import kotlin.math.abs
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -74,6 +90,14 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val canAdd = authState.canAddFigures()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is HomeEvent.RemoveFailed -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
     // selectedFigure is the live selection; lastSelectedFigure keeps the previously
     // selected one alive during the overlay's exit animation so the shared-element
     // morph has content to animate back from.
@@ -124,6 +148,7 @@ fun HomeScreen(
                     }
                 }
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { padding ->
             Box(
                 modifier = Modifier
@@ -154,13 +179,19 @@ fun HomeScreen(
                             verticalArrangement = Arrangement.Top,
                         ) {
                             items(s.visibleItems, key = { it.id }) { figure ->
-                                FigureRow(
-                                    figure = figure,
-                                    isExpanded = selectedFigure?.id == figure.id,
-                                    popupActive = popupActive,
-                                    onRowClick = { onItemClick(figure.id) },
-                                    onImageClick = { selectedFigure = figure },
-                                )
+                                SwipeToConfirmDelete(
+                                    key = figure.id,
+                                    enabled = canAdd,
+                                    onConfirmDelete = { viewModel.remove(figure.id) },
+                                ) {
+                                    FigureRow(
+                                        figure = figure,
+                                        isExpanded = selectedFigure?.id == figure.id,
+                                        popupActive = popupActive,
+                                        onRowClick = { onItemClick(figure.id) },
+                                        onImageClick = { selectedFigure = figure },
+                                    )
+                                }
                                 HorizontalDivider()
                             }
                         }
@@ -325,6 +356,82 @@ private fun ExpandedImageOverlay(
     }
 }
 
+@Composable
+private fun SwipeToConfirmDelete(
+    key: Any,
+    enabled: Boolean,
+    onConfirmDelete: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    if (!enabled) {
+        content()
+        return
+    }
+    val density = LocalDensity.current
+    val revealedPx = with(density) { CONFIRM_BUTTON_WIDTH.toPx() }
+    val offsetX = remember(key) { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val isRevealed = offsetX.value <= -revealedPx + REVEAL_SNAP_TOLERANCE_PX
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // Behind the content: the confirm button, revealed as the content slides left.
+        // matchParentSize sizes the overlay to the content so the button height tracks
+        // the row's natural height instead of forcing a fixed one.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(MaterialTheme.colorScheme.errorContainer),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
+            TextButton(
+                onClick = {
+                    onConfirmDelete()
+                    scope.launch { offsetX.animateTo(0f) }
+                },
+                enabled = isRevealed,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(CONFIRM_BUTTON_WIDTH)
+                    .testTag("$TAG_HOME_DELETE_PREFIX$key"),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Confirm delete",
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        }
+        // Foreground: the row content, translated horizontally by the drag.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(offsetX.value.toInt(), 0) }
+                .background(MaterialTheme.colorScheme.surface)
+                .pointerInput(key, revealedPx) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            // Snap to the nearer anchor based on how far the row was pulled.
+                            val target = if (abs(offsetX.value) > revealedPx / 2f) -revealedPx else 0f
+                            scope.launch { offsetX.animateTo(target) }
+                        },
+                        onDragCancel = {
+                            scope.launch { offsetX.animateTo(0f) }
+                        },
+                    ) { _, dragAmount ->
+                        // Only allow leftward reveal; clamp so the row can't drift past the button.
+                        val next = (offsetX.value + dragAmount).coerceIn(-revealedPx, 0f)
+                        scope.launch { offsetX.snapTo(next) }
+                    }
+                },
+        ) {
+            content()
+        }
+    }
+}
+
+private val CONFIRM_BUTTON_WIDTH: Dp = 96.dp
+private const val REVEAL_SNAP_TOLERANCE_PX = 0.5f
+
 // Spring duration scales as 1/sqrt(stiffness). StiffnessMediumLow (400f) gave the
 // previous feel; stiffness/1.3^2 ≈ 237f makes the morph ~30% slower.
 private fun popupBoundsSpring() = spring<androidx.compose.ui.geometry.Rect>(
@@ -348,5 +455,6 @@ const val TAG_HOME_FILTER_ALL = "home.filter.all"
 const val TAG_HOME_FILTER_PREFIX = "home.filter."
 const val TAG_HOME_ITEM_PREFIX = "home.item."
 const val TAG_HOME_THUMB_PREFIX = "home.thumb."
+const val TAG_HOME_DELETE_PREFIX = "home.delete."
 const val TAG_HOME_OVERLAY = "home.overlay"
 const val TAG_HOME_OVERLAY_IMAGE = "home.overlay.image"

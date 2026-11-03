@@ -5,15 +5,19 @@ import com.garyfimo.batmancollection.data.AuthRepository
 import com.garyfimo.batmancollection.data.AuthState
 import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.data.FigureListResult
+import com.garyfimo.batmancollection.data.FigureRemoveResult
 import com.garyfimo.batmancollection.data.FigureRepository
 import com.garyfimo.batmancollection.data.FigureType
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -46,7 +50,7 @@ class HomeViewModelTest {
                 imageUrl = "https://example.com/1187.jpg",
             ),
         )
-        coEvery { repository.list() } returns FigureListResult.Success(items)
+        every { repository.observe() } returns flowOf(FigureListResult.Success(items))
 
         val viewModel = HomeViewModel(repository, authRepository)
 
@@ -63,7 +67,7 @@ class HomeViewModelTest {
         val hw = Figure("h1", FigureType.HotWheels, "Batmobile", "103/250", "")
         val otros = Figure("o1", FigureType.Otros, "Marcelo Wong", "-", "")
         val items = listOf(funko, hw, otros)
-        coEvery { repository.list() } returns FigureListResult.Success(items)
+        every { repository.observe() } returns flowOf(FigureListResult.Success(items))
 
         val viewModel = HomeViewModel(repository, authRepository)
 
@@ -86,8 +90,8 @@ class HomeViewModelTest {
 
     @Test
     fun `emits Error state when repository returns Failure`() = runTest(dispatcher) {
-        coEvery { repository.list() } returns
-            FigureListResult.Failure(IllegalStateException("boom"))
+        every { repository.observe() } returns
+            flowOf(FigureListResult.Failure(IllegalStateException("boom")))
 
         val viewModel = HomeViewModel(repository, authRepository)
 
@@ -96,6 +100,38 @@ class HomeViewModelTest {
             val error = awaitItem()
             assertTrue(error is HomeUiState.Error)
             assertEquals("boom", (error as HomeUiState.Error).message)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `remove delegates to repository and emits nothing on success`() = runTest(dispatcher) {
+        every { repository.observe() } returns flowOf(FigureListResult.Success(emptyList()))
+        coEvery { repository.remove("abc") } returns FigureRemoveResult.Success
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.events.test {
+            viewModel.remove("abc")
+            advanceUntilIdle()
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+        coVerify { repository.remove("abc") }
+    }
+
+    @Test
+    fun `remove emits RemoveFailed when repository fails`() = runTest(dispatcher) {
+        every { repository.observe() } returns flowOf(FigureListResult.Success(emptyList()))
+        coEvery { repository.remove("abc") } returns
+            FigureRemoveResult.Failure(IllegalStateException("nope"))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.events.test {
+            viewModel.remove("abc")
+            advanceUntilIdle()
+            assertEquals(HomeEvent.RemoveFailed("nope"), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
