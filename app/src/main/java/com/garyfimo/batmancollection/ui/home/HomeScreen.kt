@@ -31,19 +31,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -62,6 +68,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
@@ -98,6 +106,18 @@ fun HomeScreen(
             }
         }
     }
+
+    var isSearching by remember { mutableStateOf(false) }
+    val query = (state as? HomeUiState.Ready)?.query.orEmpty()
+    val searchFocus = remember { FocusRequester() }
+    LaunchedEffect(isSearching) {
+        if (isSearching) searchFocus.requestFocus()
+    }
+    val closeSearch: () -> Unit = {
+        isSearching = false
+        viewModel.setQuery("")
+    }
+    BackHandler(enabled = isSearching) { closeSearch() }
     // selectedFigure is the live selection; lastSelectedFigure keeps the previously
     // selected one alive during the overlay's exit animation so the shared-element
     // morph has content to animate back from.
@@ -122,18 +142,74 @@ fun HomeScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Batman Collection") },
-                    actions = {
-                        if (authState is com.garyfimo.batmancollection.data.AuthState.SignedIn) {
-                            TextButton(
-                                onClick = viewModel::signOut,
-                                modifier = Modifier.testTag(TAG_HOME_SIGN_OUT),
-                            ) { Text("Sign out") }
+                    title = {
+                        if (isSearching) {
+                            TextField(
+                                value = query,
+                                onValueChange = viewModel::setQuery,
+                                placeholder = { Text("Search by name or series") },
+                                singleLine = true,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                ),
+                                trailingIcon = {
+                                    if (query.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = { viewModel.setQuery("") },
+                                            modifier = Modifier.testTag(TAG_HOME_SEARCH_CLEAR),
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Close,
+                                                contentDescription = "Clear search",
+                                            )
+                                        }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(searchFocus)
+                                    .testTag(TAG_HOME_SEARCH_FIELD),
+                            )
                         } else {
-                            TextButton(
-                                onClick = onSignIn,
-                                modifier = Modifier.testTag(TAG_HOME_SIGN_IN),
-                            ) { Text("Sign in") }
+                            Text("Batman Collection")
+                        }
+                    },
+                    navigationIcon = {
+                        if (isSearching) {
+                            IconButton(
+                                onClick = closeSearch,
+                                modifier = Modifier.testTag(TAG_HOME_SEARCH_CLOSE),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Close search",
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        if (!isSearching) {
+                            IconButton(
+                                onClick = { isSearching = true },
+                                modifier = Modifier.testTag(TAG_HOME_SEARCH_OPEN),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Search,
+                                    contentDescription = "Search",
+                                )
+                            }
+                            if (authState is com.garyfimo.batmancollection.data.AuthState.SignedIn) {
+                                TextButton(
+                                    onClick = viewModel::signOut,
+                                    modifier = Modifier.testTag(TAG_HOME_SIGN_OUT),
+                                ) { Text("Sign out") }
+                            } else {
+                                TextButton(
+                                    onClick = onSignIn,
+                                    modifier = Modifier.testTag(TAG_HOME_SIGN_IN),
+                                ) { Text("Sign in") }
+                            }
                         }
                     },
                 )
@@ -456,5 +532,9 @@ const val TAG_HOME_FILTER_PREFIX = "home.filter."
 const val TAG_HOME_ITEM_PREFIX = "home.item."
 const val TAG_HOME_THUMB_PREFIX = "home.thumb."
 const val TAG_HOME_DELETE_PREFIX = "home.delete."
+const val TAG_HOME_SEARCH_OPEN = "home.search.open"
+const val TAG_HOME_SEARCH_CLOSE = "home.search.close"
+const val TAG_HOME_SEARCH_CLEAR = "home.search.clear"
+const val TAG_HOME_SEARCH_FIELD = "home.search.field"
 const val TAG_HOME_OVERLAY = "home.overlay"
 const val TAG_HOME_OVERLAY_IMAGE = "home.overlay.image"
