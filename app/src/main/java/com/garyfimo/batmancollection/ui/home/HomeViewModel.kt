@@ -21,9 +21,21 @@ sealed interface HomeUiState {
     data class Ready(
         val items: List<Figure>,
         val filter: FigureType? = null,
+        val query: String = "",
     ) : HomeUiState {
-        val visibleItems: List<Figure> =
-            if (filter == null) items else items.filter { it.tipo == filter }
+        val visibleItems: List<Figure> = items
+            .let { base -> if (filter == null) base else base.filter { it.tipo == filter } }
+            .let { byTipo ->
+                val needle = query.trim()
+                if (needle.isEmpty()) {
+                    byTipo
+                } else {
+                    byTipo.filter {
+                        it.nombre.contains(needle, ignoreCase = true) ||
+                            it.serie.contains(needle, ignoreCase = true)
+                    }
+                }
+            }
     }
     data class Error(val message: String) : HomeUiState
 }
@@ -48,9 +60,13 @@ class HomeViewModel(
     init {
         viewModelScope.launch {
             repository.observe().collect { result ->
-                val previousFilter = (_state.value as? HomeUiState.Ready)?.filter
+                val previous = _state.value as? HomeUiState.Ready
                 _state.value = when (result) {
-                    is FigureListResult.Success -> HomeUiState.Ready(result.items, previousFilter)
+                    is FigureListResult.Success -> HomeUiState.Ready(
+                        items = result.items,
+                        filter = previous?.filter,
+                        query = previous?.query.orEmpty(),
+                    )
                     is FigureListResult.Failure ->
                         HomeUiState.Error(result.cause.message ?: "Unknown error")
                 }
@@ -61,6 +77,11 @@ class HomeViewModel(
     fun setFilter(filter: FigureType?) {
         val current = _state.value as? HomeUiState.Ready ?: return
         _state.value = current.copy(filter = filter)
+    }
+
+    fun setQuery(query: String) {
+        val current = _state.value as? HomeUiState.Ready ?: return
+        _state.value = current.copy(query = query)
     }
 
     fun remove(id: String) {

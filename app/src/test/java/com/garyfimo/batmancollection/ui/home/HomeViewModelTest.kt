@@ -121,6 +121,66 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `setQuery filters by nombre case-insensitively`() = runTest(dispatcher) {
+        val batman = Figure("f1", FigureType.Funko, "The Batman", "1187", "")
+        val joker = Figure("f2", FigureType.Funko, "The Joker", "202", "")
+        every { repository.observe() } returns
+            flowOf(FigureListResult.Success(listOf(batman, joker)))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            awaitItem() // Ready(all)
+            viewModel.setQuery("batman")
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(listOf(batman), ready.visibleItems)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setQuery also matches against serie`() = runTest(dispatcher) {
+        val batman = Figure("f1", FigureType.Funko, "The Batman", "1187", "")
+        val mobile = Figure("h1", FigureType.HotWheels, "Batmobile", "103/250", "")
+        every { repository.observe() } returns
+            flowOf(FigureListResult.Success(listOf(batman, mobile)))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            awaitItem()
+            viewModel.setQuery("103")
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(listOf(mobile), ready.visibleItems)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setQuery combines with tipo filter`() = runTest(dispatcher) {
+        val funkoBatman = Figure("f1", FigureType.Funko, "Batman", "1187", "")
+        val hwBatman = Figure("h1", FigureType.HotWheels, "Batmobile", "103/250", "")
+        val hwOther = Figure("h2", FigureType.HotWheels, "Mustang", "77", "")
+        every { repository.observe() } returns
+            flowOf(FigureListResult.Success(listOf(funkoBatman, hwBatman, hwOther)))
+
+        val viewModel = HomeViewModel(repository, authRepository)
+
+        viewModel.state.test {
+            assertEquals(HomeUiState.Loading, awaitItem())
+            awaitItem()
+            viewModel.setFilter(FigureType.HotWheels)
+            awaitItem()
+            viewModel.setQuery("bat")
+            val ready = awaitItem() as HomeUiState.Ready
+            assertEquals(listOf(hwBatman), ready.visibleItems)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `remove emits RemoveFailed when repository fails`() = runTest(dispatcher) {
         every { repository.observe() } returns flowOf(FigureListResult.Success(emptyList()))
         coEvery { repository.remove("abc") } returns
