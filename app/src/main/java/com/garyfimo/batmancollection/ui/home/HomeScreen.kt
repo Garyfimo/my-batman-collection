@@ -32,6 +32,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -205,10 +208,15 @@ fun HomeScreen(
                                 )
                             }
                             Box {
-                                TextButton(
+                                IconButton(
                                     onClick = { sortMenuOpen = true },
                                     modifier = Modifier.testTag(TAG_HOME_SORT_OPEN),
-                                ) { Text("Sort") }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Sort,
+                                        contentDescription = "Sort",
+                                    )
+                                }
                                 DropdownMenu(
                                     expanded = sortMenuOpen,
                                     onDismissRequest = { sortMenuOpen = false },
@@ -237,15 +245,25 @@ fun HomeScreen(
                                 }
                             }
                             if (authState is com.garyfimo.batmancollection.data.AuthState.SignedIn) {
-                                TextButton(
+                                IconButton(
                                     onClick = viewModel::signOut,
                                     modifier = Modifier.testTag(TAG_HOME_SIGN_OUT),
-                                ) { Text("Sign out") }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                                        contentDescription = "Sign out",
+                                    )
+                                }
                             } else {
-                                TextButton(
+                                IconButton(
                                     onClick = onSignIn,
                                     modifier = Modifier.testTag(TAG_HOME_SIGN_IN),
-                                ) { Text("Sign in") }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Login,
+                                        contentDescription = "Sign in",
+                                    )
+                                }
                             }
                         }
                     },
