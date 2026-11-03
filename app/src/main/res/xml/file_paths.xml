@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Camera captures land in the app's cache dir under /camera; the directory
+         is wiped automatically by the OS under storage pressure, so we don't
+         need to clean up temp files ourselves. -->
+    <cache-path name="camera" path="camera/" />
+</paths>
