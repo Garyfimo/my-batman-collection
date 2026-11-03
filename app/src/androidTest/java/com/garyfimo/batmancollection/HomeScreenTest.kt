@@ -23,10 +23,10 @@ import com.garyfimo.batmancollection.ui.home.TAG_HOME_OVERLAY_IMAGE
 import com.garyfimo.batmancollection.ui.home.TAG_HOME_ROOT
 import com.garyfimo.batmancollection.ui.home.TAG_HOME_THUMB_PREFIX
 import com.garyfimo.batmancollection.ui.theme.BatmanCollectionTheme
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -47,7 +47,7 @@ class HomeScreenTest {
 
     private fun fakeRepository(items: List<Figure> = listOf(sampleFigure)): FigureRepository =
         mockk<FigureRepository>().also {
-            coEvery { it.list() } returns FigureListResult.Success(items)
+            every { it.observe() } returns flowOf(FigureListResult.Success(items))
         }
 
     private fun fakeAuth(state: AuthState = AuthState.SignedOut): AuthRepository =

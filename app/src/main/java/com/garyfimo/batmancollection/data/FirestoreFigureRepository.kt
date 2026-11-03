@@ -4,7 +4,11 @@ import android.net.Uri
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class FirestoreFigureRepository(
@@ -12,11 +16,20 @@ class FirestoreFigureRepository(
     private val storage: FirebaseStorage,
 ) : FigureRepository {
 
-    override suspend fun list(): FigureListResult = try {
-        val snapshot = firestore.collection(COLLECTION).get().await()
-        FigureListResult.Success(snapshot.documents.mapNotNull { it.toFigure() })
-    } catch (t: Throwable) {
-        FigureListResult.Failure(t)
+    override fun observe(): Flow<FigureListResult> = callbackFlow {
+        // Order by createdAt desc so new adds surface at the top. Figures migrated
+        // without a createdAt sort below ones that have it.
+        val registration = firestore.collection(COLLECTION)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                when {
+                    error != null -> trySend(FigureListResult.Failure(error))
+                    snapshot != null -> trySend(
+                        FigureListResult.Success(snapshot.documents.mapNotNull { it.toFigure() }),
+                    )
+                }
+            }
+        awaitClose { registration.remove() }
     }
 
     override suspend fun get(id: String): FigureLookup = try {

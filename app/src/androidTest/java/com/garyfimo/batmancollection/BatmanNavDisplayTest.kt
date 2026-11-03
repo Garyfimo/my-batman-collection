@@ -28,6 +28,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -65,7 +66,7 @@ class BatmanNavDisplayTest {
     fun setUp() {
         runCatching { stopKoin() }
         val repository: FigureRepository = mockk<FigureRepository>().also {
-            coEvery { it.list() } returns FigureListResult.Success(listOf(bruce, mobile))
+            every { it.observe() } returns flowOf(FigureListResult.Success(listOf(bruce, mobile)))
             coEvery { it.get(bruce.id) } returns FigureLookup.Found(bruce)
             coEvery { it.get(mobile.id) } returns FigureLookup.Found(mobile)
         }
