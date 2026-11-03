@@ -33,10 +33,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -108,7 +111,9 @@ fun HomeScreen(
     }
 
     var isSearching by remember { mutableStateOf(false) }
+    var sortMenuOpen by remember { mutableStateOf(false) }
     val query = (state as? HomeUiState.Ready)?.query.orEmpty()
+    val currentSort = (state as? HomeUiState.Ready)?.sort ?: HomeSort.CreatedAt
     val searchFocus = remember { FocusRequester() }
     LaunchedEffect(isSearching) {
         if (isSearching) searchFocus.requestFocus()
@@ -198,6 +203,38 @@ fun HomeScreen(
                                     imageVector = Icons.Filled.Search,
                                     contentDescription = "Search",
                                 )
+                            }
+                            Box {
+                                TextButton(
+                                    onClick = { sortMenuOpen = true },
+                                    modifier = Modifier.testTag(TAG_HOME_SORT_OPEN),
+                                ) { Text("Sort") }
+                                DropdownMenu(
+                                    expanded = sortMenuOpen,
+                                    onDismissRequest = { sortMenuOpen = false },
+                                    modifier = Modifier.testTag(TAG_HOME_SORT_MENU),
+                                ) {
+                                    HomeSort.entries.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option.label) },
+                                            onClick = {
+                                                viewModel.setSort(option)
+                                                sortMenuOpen = false
+                                            },
+                                            leadingIcon = {
+                                                if (option == currentSort) {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Check,
+                                                        contentDescription = null,
+                                                    )
+                                                }
+                                            },
+                                            modifier = Modifier.testTag(
+                                                "$TAG_HOME_SORT_ITEM_PREFIX${option.name}",
+                                            ),
+                                        )
+                                    }
+                                }
                             }
                             if (authState is com.garyfimo.batmancollection.data.AuthState.SignedIn) {
                                 TextButton(
@@ -536,5 +573,8 @@ const val TAG_HOME_SEARCH_OPEN = "home.search.open"
 const val TAG_HOME_SEARCH_CLOSE = "home.search.close"
 const val TAG_HOME_SEARCH_CLEAR = "home.search.clear"
 const val TAG_HOME_SEARCH_FIELD = "home.search.field"
+const val TAG_HOME_SORT_OPEN = "home.sort.open"
+const val TAG_HOME_SORT_MENU = "home.sort.menu"
+const val TAG_HOME_SORT_ITEM_PREFIX = "home.sort.item."
 const val TAG_HOME_OVERLAY = "home.overlay"
 const val TAG_HOME_OVERLAY_IMAGE = "home.overlay.image"
