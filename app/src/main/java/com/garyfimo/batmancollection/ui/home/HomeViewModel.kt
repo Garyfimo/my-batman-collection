@@ -6,11 +6,14 @@ import com.garyfimo.batmancollection.data.AuthRepository
 import com.garyfimo.batmancollection.data.AuthState
 import com.garyfimo.batmancollection.data.Figure
 import com.garyfimo.batmancollection.data.FigureListResult
+import com.garyfimo.batmancollection.data.FigureRemoveResult
 import com.garyfimo.batmancollection.data.FigureRepository
 import com.garyfimo.batmancollection.data.FigureType
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 sealed interface HomeUiState {
@@ -25,6 +28,10 @@ sealed interface HomeUiState {
     data class Error(val message: String) : HomeUiState
 }
 
+sealed interface HomeEvent {
+    data class RemoveFailed(val message: String) : HomeEvent
+}
+
 class HomeViewModel(
     private val repository: FigureRepository,
     private val authRepository: AuthRepository,
@@ -34,6 +41,9 @@ class HomeViewModel(
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     val authState: StateFlow<AuthState> = authRepository.state
+
+    private val _events = Channel<HomeEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -51,6 +61,16 @@ class HomeViewModel(
     fun setFilter(filter: FigureType?) {
         val current = _state.value as? HomeUiState.Ready ?: return
         _state.value = current.copy(filter = filter)
+    }
+
+    fun remove(id: String) {
+        viewModelScope.launch {
+            when (val result = repository.remove(id)) {
+                is FigureRemoveResult.Success -> Unit // snapshot flow refreshes the list
+                is FigureRemoveResult.Failure ->
+                    _events.send(HomeEvent.RemoveFailed(result.cause.message ?: "Delete failed"))
+            }
+        }
     }
 
     fun signOut() {

@@ -65,7 +65,7 @@ class BatmanNavDisplayTest {
     @Before
     fun setUp() {
         runCatching { stopKoin() }
-        val repository: FigureRepository = mockk<FigureRepository>().also {
+        val repository: FigureRepository = mockk<FigureRepository>(relaxed = true).also {
             every { it.observe() } returns flowOf(FigureListResult.Success(listOf(bruce, mobile)))
             coEvery { it.get(bruce.id) } returns FigureLookup.Found(bruce)
             coEvery { it.get(mobile.id) } returns FigureLookup.Found(mobile)

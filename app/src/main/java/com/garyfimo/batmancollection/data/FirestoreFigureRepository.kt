@@ -69,6 +69,17 @@ class FirestoreFigureRepository(
         FigureAddResult.Failure(t)
     }
 
+    override suspend fun remove(id: String): FigureRemoveResult = try {
+        // Delete the Firestore doc first so the user's list updates immediately via the
+        // snapshot listener. The Storage blob is best-effort: a missing or already-deleted
+        // image must not fail the whole operation (the figure the user cares about is gone).
+        firestore.collection(COLLECTION).document(id).delete().await()
+        runCatching { storage.reference.child("$COLLECTION/$id.jpg").delete().await() }
+        FigureRemoveResult.Success
+    } catch (t: Throwable) {
+        FigureRemoveResult.Failure(t)
+    }
+
     private fun DocumentSnapshot.toFigure(): Figure? {
         val tipo = FigureType.fromLabel(getString("tipo")) ?: return null
         val nombre = getString("nombre") ?: return null
