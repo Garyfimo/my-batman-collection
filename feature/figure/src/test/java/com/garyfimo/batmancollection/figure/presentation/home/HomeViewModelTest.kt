@@ -1,6 +1,7 @@
 package com.garyfimo.batmancollection.figure.presentation.home
 
 import app.cash.turbine.test
+import com.garyfimo.batmancollection.analytics.domain.Analytics
 import com.garyfimo.batmancollection.login.domain.AuthRepository
 import com.garyfimo.batmancollection.login.domain.AuthState
 import com.garyfimo.batmancollection.figure.domain.Figure
@@ -35,6 +36,14 @@ class HomeViewModelTest {
     private val authRepository: AuthRepository = mockk<AuthRepository>().also {
         every { it.state } returns MutableStateFlow<AuthState>(AuthState.SignedOut)
     }
+    private val analytics = FakeAnalytics()
+
+    private class FakeAnalytics : Analytics {
+        val events = mutableListOf<Pair<String, Map<String, Any>>>()
+        override fun track(event: String, params: Map<String, Any>) {
+            events += event to params
+        }
+    }
 
     @Before fun setUp() { Dispatchers.setMain(dispatcher) }
     @After fun tearDown() { Dispatchers.resetMain() }
@@ -52,7 +61,7 @@ class HomeViewModelTest {
         )
         every { repository.observe() } returns flowOf(FigureListResult.Success(items))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -69,7 +78,7 @@ class HomeViewModelTest {
         val items = listOf(funko, hw, otros)
         every { repository.observe() } returns flowOf(FigureListResult.Success(items))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -93,7 +102,7 @@ class HomeViewModelTest {
         every { repository.observe() } returns
             flowOf(FigureListResult.Failure(IllegalStateException("boom")))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -112,7 +121,7 @@ class HomeViewModelTest {
         // Repo returns these in a specific order; CreatedAt sort must not re-sort.
         every { repository.observe() } returns flowOf(FigureListResult.Success(listOf(b, a, c)))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -131,7 +140,7 @@ class HomeViewModelTest {
         )
         every { repository.observe() } returns flowOf(FigureListResult.Success(items))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -153,7 +162,7 @@ class HomeViewModelTest {
         )
         every { repository.observe() } returns flowOf(FigureListResult.Success(items))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -177,7 +186,7 @@ class HomeViewModelTest {
         )
         every { repository.observe() } returns flowOf(FigureListResult.Success(items))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -194,10 +203,10 @@ class HomeViewModelTest {
         every { repository.observe() } returns flowOf(FigureListResult.Success(emptyList()))
         coEvery { repository.remove("abc") } returns FigureRemoveResult.Success
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.effects.test {
-            viewModel.onIntent(HomeIntent.FigureRemoved("abc"))
+            viewModel.onIntent(HomeIntent.FigureRemoved(Figure("abc", FigureType.Funko, "X", "1", "")))
             advanceUntilIdle()
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
@@ -212,7 +221,7 @@ class HomeViewModelTest {
         every { repository.observe() } returns
             flowOf(FigureListResult.Success(listOf(batman, joker)))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -231,7 +240,7 @@ class HomeViewModelTest {
         every { repository.observe() } returns
             flowOf(FigureListResult.Success(listOf(batman, mobile)))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -251,7 +260,7 @@ class HomeViewModelTest {
         every { repository.observe() } returns
             flowOf(FigureListResult.Success(listOf(funkoBatman, hwBatman, hwOther)))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
@@ -271,10 +280,10 @@ class HomeViewModelTest {
         coEvery { repository.remove("abc") } returns
             FigureRemoveResult.Failure(IllegalStateException("nope"))
 
-        val viewModel = HomeViewModel(repository, authRepository)
+        val viewModel = HomeViewModel(repository, authRepository, analytics)
 
         viewModel.effects.test {
-            viewModel.onIntent(HomeIntent.FigureRemoved("abc"))
+            viewModel.onIntent(HomeIntent.FigureRemoved(Figure("abc", FigureType.Funko, "X", "1", "")))
             advanceUntilIdle()
             assertEquals(HomeEffect.RemoveFailed("nope"), awaitItem())
             cancelAndIgnoreRemainingEvents()

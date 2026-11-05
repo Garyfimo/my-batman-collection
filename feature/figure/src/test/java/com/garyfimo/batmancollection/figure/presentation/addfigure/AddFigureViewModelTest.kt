@@ -1,6 +1,7 @@
 package com.garyfimo.batmancollection.figure.presentation.addfigure
 
 import app.cash.turbine.test
+import com.garyfimo.batmancollection.analytics.domain.Analytics
 import com.garyfimo.batmancollection.figure.domain.FigureAddResult
 import com.garyfimo.batmancollection.figure.domain.FigureDraft
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
@@ -29,13 +30,21 @@ class AddFigureViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val repository: FigureRepository = mockk(relaxed = true)
+    private val analytics = FakeAnalytics()
+
+    private class FakeAnalytics : Analytics {
+        val events = mutableListOf<Pair<String, Map<String, Any>>>()
+        override fun track(event: String, params: Map<String, Any>) {
+            events += event to params
+        }
+    }
 
     @Before fun setUp() { Dispatchers.setMain(dispatcher) }
     @After fun tearDown() { Dispatchers.resetMain() }
 
     @Test
     fun `submit on empty form flags every required field without emitting Submitted`() = runTest(dispatcher) {
-        val viewModel = AddFigureViewModel(repository)
+        val viewModel = AddFigureViewModel(repository, analytics)
 
         viewModel.effects.test {
             viewModel.onIntent(AddFigureIntent.Submitted)
@@ -54,7 +63,7 @@ class AddFigureViewModelTest {
 
     @Test
     fun `fixing a flagged field clears its error on next recomposition`() = runTest(dispatcher) {
-        val viewModel = AddFigureViewModel(repository)
+        val viewModel = AddFigureViewModel(repository, analytics)
         viewModel.onIntent(AddFigureIntent.Submitted)
 
         viewModel.onIntent(AddFigureIntent.NombreChanged("Bruce Wayne"))
@@ -65,7 +74,7 @@ class AddFigureViewModelTest {
     @Test
     fun `successful add emits Submitted and resets state`() = runTest(dispatcher) {
         coEvery { repository.add(any()) } returns FigureAddResult.Success("new-id")
-        val viewModel = AddFigureViewModel(repository)
+        val viewModel = AddFigureViewModel(repository, analytics)
         viewModel.onIntent(AddFigureIntent.TipoChanged(FigureType.Funko))
         viewModel.onIntent(AddFigureIntent.NombreChanged("Bruce Wayne"))
         viewModel.onIntent(AddFigureIntent.SerieChanged("DC Pop! Heroes"))
@@ -94,7 +103,7 @@ class AddFigureViewModelTest {
     fun `failed add emits SubmitFailed and keeps the form content`() = runTest(dispatcher) {
         coEvery { repository.add(any()) } returns
             FigureAddResult.Failure(IllegalStateException("boom"))
-        val viewModel = AddFigureViewModel(repository)
+        val viewModel = AddFigureViewModel(repository, analytics)
         viewModel.onIntent(AddFigureIntent.TipoChanged(FigureType.HotWheels))
         viewModel.onIntent(AddFigureIntent.NombreChanged("Batmobile"))
         viewModel.onIntent(AddFigureIntent.SerieChanged("103/250"))

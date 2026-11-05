@@ -59,6 +59,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":integration:analytics"))
     implementation(project(":feature:login"))
     implementation(project(":feature:figure"))
 

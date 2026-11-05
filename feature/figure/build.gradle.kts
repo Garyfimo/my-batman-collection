@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    api(project(":integration:analytics"))
     api(project(":feature:login"))
 
     implementation(libs.androidx.core.ktx)

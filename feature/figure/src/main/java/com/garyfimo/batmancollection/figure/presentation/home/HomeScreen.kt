@@ -123,7 +123,7 @@ fun HomeScreen(
     }
     val closeSearch: () -> Unit = {
         isSearching = false
-        viewModel.onIntent(HomeIntent.QueryChanged(""))
+        viewModel.onIntent(HomeIntent.SearchClosed)
     }
     BackHandler(enabled = isSearching) { closeSearch() }
     // selectedFigure is the live selection; lastSelectedFigure keeps the previously
@@ -199,7 +199,10 @@ fun HomeScreen(
                     actions = {
                         if (!isSearching) {
                             IconButton(
-                                onClick = { isSearching = true },
+                                onClick = {
+                                    viewModel.onIntent(HomeIntent.SearchOpened)
+                                    isSearching = true
+                                },
                                 modifier = Modifier.testTag(TAG_HOME_SEARCH_OPEN),
                             ) {
                                 Icon(
@@ -313,13 +316,16 @@ fun HomeScreen(
                                 SwipeToConfirmDelete(
                                     key = figure.id,
                                     enabled = canAdd,
-                                    onConfirmDelete = { viewModel.onIntent(HomeIntent.FigureRemoved(figure.id)) },
+                                    onConfirmDelete = { viewModel.onIntent(HomeIntent.FigureRemoved(figure)) },
                                 ) {
                                     FigureRow(
                                         figure = figure,
                                         isExpanded = selectedFigure?.id == figure.id,
                                         popupActive = popupActive,
-                                        onRowClick = { onItemClick(figure.id) },
+                                        onRowClick = {
+                                            viewModel.onIntent(HomeIntent.FigureSelected(figure))
+                                            onItemClick(figure.id)
+                                        },
                                         onImageClick = { selectedFigure = figure },
                                     )
                                 }
