@@ -22,5 +22,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "BatmanCollection"
 include(":app")
+include(":integration:analytics")
 include(":feature:login")
 include(":feature:figure")
