@@ -75,14 +75,14 @@ fun AddFigureScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                AddFigureEvent.Submitted -> {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                AddFigureEffect.Saved -> {
                     snackbarHostState.showSnackbar("Figura guardada")
                     onSubmitted()
                 }
-                is AddFigureEvent.SubmitFailed ->
-                    snackbarHostState.showSnackbar(event.message)
+                is AddFigureEffect.SubmitFailed ->
+                    snackbarHostState.showSnackbar(effect.message)
             }
         }
     }
@@ -105,7 +105,7 @@ fun AddFigureScreen(
         bottomBar = {
             Surface(tonalElevation = 3.dp) {
                 Button(
-                    onClick = viewModel::submit,
+                    onClick = { viewModel.onIntent(AddFigureIntent.Submitted) },
                     enabled = state.isValid && !state.submitting,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -129,7 +129,7 @@ fun AddFigureScreen(
             TipoDropdown(
                 selected = state.tipo,
                 errorText = state.tipoError,
-                onSelected = viewModel::setTipo,
+                onSelected = { viewModel.onIntent(AddFigureIntent.TipoChanged(it)) },
             )
 
             RequiredTextField(
@@ -137,7 +137,7 @@ fun AddFigureScreen(
                 value = state.nombre,
                 errorText = state.nombreError,
                 testTag = TAG_ADD_NOMBRE,
-                onValueChange = viewModel::setNombre,
+                onValueChange = { viewModel.onIntent(AddFigureIntent.NombreChanged(it)) },
             )
 
             RequiredTextField(
@@ -145,13 +145,13 @@ fun AddFigureScreen(
                 value = state.serie,
                 errorText = state.serieError,
                 testTag = TAG_ADD_SERIE,
-                onValueChange = viewModel::setSerie,
+                onValueChange = { viewModel.onIntent(AddFigureIntent.SerieChanged(it)) },
             )
 
             ImagePickerField(
                 imageUri = state.imageUri,
                 errorText = state.imageError,
-                onImagePicked = viewModel::setImageUri,
+                onImagePicked = { viewModel.onIntent(AddFigureIntent.ImagePicked(it)) },
             )
         }
     }

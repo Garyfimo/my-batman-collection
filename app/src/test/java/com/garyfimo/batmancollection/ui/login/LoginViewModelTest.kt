@@ -37,9 +37,9 @@ class LoginViewModelTest {
         val viewModel = LoginViewModel(authRepository)
 
         assertFalse(viewModel.state.value.isValid)
-        viewModel.setEmail("garyfimo@gmail.com")
+        viewModel.onIntent(LoginIntent.EmailChanged("garyfimo@gmail.com"))
         assertFalse(viewModel.state.value.isValid)
-        viewModel.setPassword("hunter2")
+        viewModel.onIntent(LoginIntent.PasswordChanged("hunter2"))
         assertEquals(true, viewModel.state.value.isValid)
     }
 
@@ -47,12 +47,12 @@ class LoginViewModelTest {
     fun `successful sign-in emits SignedIn and resets state`() = runTest(dispatcher) {
         coEvery { authRepository.signIn("garyfimo@gmail.com", "hunter2") } returns SignInResult.Success
         val viewModel = LoginViewModel(authRepository)
-        viewModel.setEmail("garyfimo@gmail.com")
-        viewModel.setPassword("hunter2")
+        viewModel.onIntent(LoginIntent.EmailChanged("garyfimo@gmail.com"))
+        viewModel.onIntent(LoginIntent.PasswordChanged("hunter2"))
 
-        viewModel.events.test {
-            viewModel.submit()
-            assertEquals(LoginEvent.SignedIn, awaitItem())
+        viewModel.effects.test {
+            viewModel.onIntent(LoginIntent.Submitted)
+            assertEquals(LoginEffect.SignedIn, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 
@@ -64,11 +64,11 @@ class LoginViewModelTest {
         coEvery { authRepository.signIn("garyfimo@gmail.com", "wrong") } returns
             SignInResult.Failure("The password is invalid")
         val viewModel = LoginViewModel(authRepository)
-        viewModel.setEmail("garyfimo@gmail.com")
-        viewModel.setPassword("wrong")
+        viewModel.onIntent(LoginIntent.EmailChanged("garyfimo@gmail.com"))
+        viewModel.onIntent(LoginIntent.PasswordChanged("wrong"))
 
-        viewModel.events.test {
-            viewModel.submit()
+        viewModel.effects.test {
+            viewModel.onIntent(LoginIntent.Submitted)
             advanceUntilIdle()
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()

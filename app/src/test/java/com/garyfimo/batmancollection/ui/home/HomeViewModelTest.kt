@@ -76,12 +76,12 @@ class HomeViewModelTest {
             val ready = awaitItem() as HomeUiState.Ready
             assertEquals(items, ready.visibleItems)
 
-            viewModel.setFilter(FigureType.HotWheels)
+            viewModel.onIntent(HomeIntent.FilterChanged(FigureType.HotWheels))
             val filtered = awaitItem() as HomeUiState.Ready
             assertEquals(listOf(hw), filtered.visibleItems)
             assertEquals(FigureType.HotWheels, filtered.filter)
 
-            viewModel.setFilter(null)
+            viewModel.onIntent(HomeIntent.FilterChanged(null))
             val cleared = awaitItem() as HomeUiState.Ready
             assertEquals(items, cleared.visibleItems)
             cancelAndIgnoreRemainingEvents()
@@ -136,7 +136,7 @@ class HomeViewModelTest {
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
             awaitItem()
-            viewModel.setSort(HomeSort.Name)
+            viewModel.onIntent(HomeIntent.SortChanged(HomeSort.Name))
             val ready = awaitItem() as HomeUiState.Ready
             assertEquals(listOf("alfred", "Batman", "zatanna"), ready.visibleItems.map { it.nombre })
             cancelAndIgnoreRemainingEvents()
@@ -158,7 +158,7 @@ class HomeViewModelTest {
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
             awaitItem()
-            viewModel.setSort(HomeSort.Type)
+            viewModel.onIntent(HomeIntent.SortChanged(HomeSort.Type))
             val ready = awaitItem() as HomeUiState.Ready
             assertEquals(
                 listOf("Alfred", "Batman", "Batmobile", "Wong"),
@@ -182,7 +182,7 @@ class HomeViewModelTest {
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
             awaitItem()
-            viewModel.setSort(HomeSort.Serie)
+            viewModel.onIntent(HomeIntent.SortChanged(HomeSort.Serie))
             val ready = awaitItem() as HomeUiState.Ready
             assertEquals(listOf("alpha", "Beta", "zeta"), ready.visibleItems.map { it.serie })
             cancelAndIgnoreRemainingEvents()
@@ -196,8 +196,8 @@ class HomeViewModelTest {
 
         val viewModel = HomeViewModel(repository, authRepository)
 
-        viewModel.events.test {
-            viewModel.remove("abc")
+        viewModel.effects.test {
+            viewModel.onIntent(HomeIntent.FigureRemoved("abc"))
             advanceUntilIdle()
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
@@ -217,7 +217,7 @@ class HomeViewModelTest {
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
             awaitItem() // Ready(all)
-            viewModel.setQuery("batman")
+            viewModel.onIntent(HomeIntent.QueryChanged("batman"))
             val ready = awaitItem() as HomeUiState.Ready
             assertEquals(listOf(batman), ready.visibleItems)
             cancelAndIgnoreRemainingEvents()
@@ -236,7 +236,7 @@ class HomeViewModelTest {
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
             awaitItem()
-            viewModel.setQuery("103")
+            viewModel.onIntent(HomeIntent.QueryChanged("103"))
             val ready = awaitItem() as HomeUiState.Ready
             assertEquals(listOf(mobile), ready.visibleItems)
             cancelAndIgnoreRemainingEvents()
@@ -256,9 +256,9 @@ class HomeViewModelTest {
         viewModel.state.test {
             assertEquals(HomeUiState.Loading, awaitItem())
             awaitItem()
-            viewModel.setFilter(FigureType.HotWheels)
+            viewModel.onIntent(HomeIntent.FilterChanged(FigureType.HotWheels))
             awaitItem()
-            viewModel.setQuery("bat")
+            viewModel.onIntent(HomeIntent.QueryChanged("bat"))
             val ready = awaitItem() as HomeUiState.Ready
             assertEquals(listOf(hwBatman), ready.visibleItems)
             cancelAndIgnoreRemainingEvents()
@@ -273,10 +273,10 @@ class HomeViewModelTest {
 
         val viewModel = HomeViewModel(repository, authRepository)
 
-        viewModel.events.test {
-            viewModel.remove("abc")
+        viewModel.effects.test {
+            viewModel.onIntent(HomeIntent.FigureRemoved("abc"))
             advanceUntilIdle()
-            assertEquals(HomeEvent.RemoveFailed("nope"), awaitItem())
+            assertEquals(HomeEffect.RemoveFailed("nope"), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -106,9 +106,9 @@ fun HomeScreen(
     val canAdd = authState.canAddFigures()
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is HomeEvent.RemoveFailed -> snackbarHostState.showSnackbar(event.message)
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is HomeEffect.RemoveFailed -> snackbarHostState.showSnackbar(effect.message)
             }
         }
     }
@@ -123,7 +123,7 @@ fun HomeScreen(
     }
     val closeSearch: () -> Unit = {
         isSearching = false
-        viewModel.setQuery("")
+        viewModel.onIntent(HomeIntent.QueryChanged(""))
     }
     BackHandler(enabled = isSearching) { closeSearch() }
     // selectedFigure is the live selection; lastSelectedFigure keeps the previously
@@ -154,7 +154,7 @@ fun HomeScreen(
                         if (isSearching) {
                             TextField(
                                 value = query,
-                                onValueChange = viewModel::setQuery,
+                                onValueChange = { viewModel.onIntent(HomeIntent.QueryChanged(it)) },
                                 placeholder = { Text("Search by name or series") },
                                 singleLine = true,
                                 colors = TextFieldDefaults.colors(
@@ -164,7 +164,7 @@ fun HomeScreen(
                                 trailingIcon = {
                                     if (query.isNotEmpty()) {
                                         IconButton(
-                                            onClick = { viewModel.setQuery("") },
+                                            onClick = { viewModel.onIntent(HomeIntent.QueryChanged("")) },
                                             modifier = Modifier.testTag(TAG_HOME_SEARCH_CLEAR),
                                         ) {
                                             Icon(
@@ -226,7 +226,7 @@ fun HomeScreen(
                                         DropdownMenuItem(
                                             text = { Text(option.label) },
                                             onClick = {
-                                                viewModel.setSort(option)
+                                                viewModel.onIntent(HomeIntent.SortChanged(option))
                                                 sortMenuOpen = false
                                             },
                                             leadingIcon = {
@@ -246,7 +246,7 @@ fun HomeScreen(
                             }
                             if (authState is com.garyfimo.batmancollection.data.AuthState.SignedIn) {
                                 IconButton(
-                                    onClick = viewModel::signOut,
+                                    onClick = { viewModel.onIntent(HomeIntent.SignedOut) },
                                     modifier = Modifier.testTag(TAG_HOME_SIGN_OUT),
                                 ) {
                                     Icon(
@@ -301,7 +301,7 @@ fun HomeScreen(
                     ) {
                         FilterRow(
                             selected = s.filter,
-                            onSelected = viewModel::setFilter,
+                            onSelected = { viewModel.onIntent(HomeIntent.FilterChanged(it)) },
                         )
                         LazyColumn(
                             modifier = Modifier
@@ -313,7 +313,7 @@ fun HomeScreen(
                                 SwipeToConfirmDelete(
                                     key = figure.id,
                                     enabled = canAdd,
-                                    onConfirmDelete = { viewModel.remove(figure.id) },
+                                    onConfirmDelete = { viewModel.onIntent(HomeIntent.FigureRemoved(figure.id)) },
                                 ) {
                                     FigureRow(
                                         figure = figure,
