@@ -37,8 +37,8 @@ class AddFigureViewModelTest {
     fun `submit on empty form flags every required field without emitting Submitted`() = runTest(dispatcher) {
         val viewModel = AddFigureViewModel(repository)
 
-        viewModel.events.test {
-            viewModel.submit()
+        viewModel.effects.test {
+            viewModel.onIntent(AddFigureIntent.Submitted)
             expectNoEvents()
             cancelAndIgnoreRemainingEvents()
         }
@@ -55,9 +55,9 @@ class AddFigureViewModelTest {
     @Test
     fun `fixing a flagged field clears its error on next recomposition`() = runTest(dispatcher) {
         val viewModel = AddFigureViewModel(repository)
-        viewModel.submit()
+        viewModel.onIntent(AddFigureIntent.Submitted)
 
-        viewModel.setNombre("Bruce Wayne")
+        viewModel.onIntent(AddFigureIntent.NombreChanged("Bruce Wayne"))
         assertNull(viewModel.state.value.nombreError)
         assertNotNull(viewModel.state.value.serieError)
     }
@@ -66,14 +66,14 @@ class AddFigureViewModelTest {
     fun `successful add emits Submitted and resets state`() = runTest(dispatcher) {
         coEvery { repository.add(any()) } returns FigureAddResult.Success("new-id")
         val viewModel = AddFigureViewModel(repository)
-        viewModel.setTipo(FigureType.Funko)
-        viewModel.setNombre("Bruce Wayne")
-        viewModel.setSerie("DC Pop! Heroes")
-        viewModel.setImageUri("content://images/1")
+        viewModel.onIntent(AddFigureIntent.TipoChanged(FigureType.Funko))
+        viewModel.onIntent(AddFigureIntent.NombreChanged("Bruce Wayne"))
+        viewModel.onIntent(AddFigureIntent.SerieChanged("DC Pop! Heroes"))
+        viewModel.onIntent(AddFigureIntent.ImagePicked("content://images/1"))
 
-        viewModel.events.test {
-            viewModel.submit()
-            assertEquals(AddFigureEvent.Submitted, awaitItem())
+        viewModel.effects.test {
+            viewModel.onIntent(AddFigureIntent.Submitted)
+            assertEquals(AddFigureEffect.Saved, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 
@@ -95,15 +95,15 @@ class AddFigureViewModelTest {
         coEvery { repository.add(any()) } returns
             FigureAddResult.Failure(IllegalStateException("boom"))
         val viewModel = AddFigureViewModel(repository)
-        viewModel.setTipo(FigureType.HotWheels)
-        viewModel.setNombre("Batmobile")
-        viewModel.setSerie("103/250")
-        viewModel.setImageUri("content://images/2")
+        viewModel.onIntent(AddFigureIntent.TipoChanged(FigureType.HotWheels))
+        viewModel.onIntent(AddFigureIntent.NombreChanged("Batmobile"))
+        viewModel.onIntent(AddFigureIntent.SerieChanged("103/250"))
+        viewModel.onIntent(AddFigureIntent.ImagePicked("content://images/2"))
 
-        viewModel.events.test {
-            viewModel.submit()
+        viewModel.effects.test {
+            viewModel.onIntent(AddFigureIntent.Submitted)
             advanceUntilIdle()
-            assertEquals(AddFigureEvent.SubmitFailed("boom"), awaitItem())
+            assertEquals(AddFigureEffect.SubmitFailed("boom"), awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
 

@@ -38,9 +38,9 @@ fun LoginScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                LoginEvent.SignedIn -> onSignedIn()
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                LoginEffect.SignedIn -> onSignedIn()
             }
         }
     }
@@ -70,7 +70,7 @@ fun LoginScreen(
         ) {
             OutlinedTextField(
                 value = state.email,
-                onValueChange = viewModel::setEmail,
+                onValueChange = { viewModel.onIntent(LoginIntent.EmailChanged(it)) },
                 label = { Text("Email") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -81,7 +81,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = state.password,
-                onValueChange = viewModel::setPassword,
+                onValueChange = { viewModel.onIntent(LoginIntent.PasswordChanged(it)) },
                 label = { Text("Password") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
@@ -100,7 +100,7 @@ fun LoginScreen(
             }
 
             Button(
-                onClick = viewModel::submit,
+                onClick = { viewModel.onIntent(LoginIntent.Submitted) },
                 enabled = state.isValid,
                 modifier = Modifier
                     .fillMaxWidth()

@@ -1,8 +1,11 @@
 package com.garyfimo.batmancollection.ui.addfigure
 
+import android.content.Context
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,7 +28,9 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -32,22 +39,29 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.garyfimo.batmancollection.data.FigureType
+import java.io.File
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,14 +75,14 @@ fun AddFigureScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                AddFigureEvent.Submitted -> {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                AddFigureEffect.Saved -> {
                     snackbarHostState.showSnackbar("Figura guardada")
                     onSubmitted()
                 }
-                is AddFigureEvent.SubmitFailed ->
-                    snackbarHostState.showSnackbar(event.message)
+                is AddFigureEffect.SubmitFailed ->
+                    snackbarHostState.showSnackbar(effect.message)
             }
         }
     }
@@ -91,7 +105,7 @@ fun AddFigureScreen(
         bottomBar = {
             Surface(tonalElevation = 3.dp) {
                 Button(
-                    onClick = viewModel::submit,
+                    onClick = { viewModel.onIntent(AddFigureIntent.Submitted) },
                     enabled = state.isValid && !state.submitting,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -115,7 +129,7 @@ fun AddFigureScreen(
             TipoDropdown(
                 selected = state.tipo,
                 errorText = state.tipoError,
-                onSelected = viewModel::setTipo,
+                onSelected = { viewModel.onIntent(AddFigureIntent.TipoChanged(it)) },
             )
 
             RequiredTextField(
@@ -123,7 +137,7 @@ fun AddFigureScreen(
                 value = state.nombre,
                 errorText = state.nombreError,
                 testTag = TAG_ADD_NOMBRE,
-                onValueChange = viewModel::setNombre,
+                onValueChange = { viewModel.onIntent(AddFigureIntent.NombreChanged(it)) },
             )
 
             RequiredTextField(
@@ -131,13 +145,13 @@ fun AddFigureScreen(
                 value = state.serie,
                 errorText = state.serieError,
                 testTag = TAG_ADD_SERIE,
-                onValueChange = viewModel::setSerie,
+                onValueChange = { viewModel.onIntent(AddFigureIntent.SerieChanged(it)) },
             )
 
             ImagePickerField(
                 imageUri = state.imageUri,
                 errorText = state.imageError,
-                onImagePicked = viewModel::setImageUri,
+                onImagePicked = { viewModel.onIntent(AddFigureIntent.ImagePicked(it)) },
             )
         }
     }
@@ -209,15 +223,40 @@ private fun RequiredTextField(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ImagePickerField(
     imageUri: String?,
     errorText: String?,
     onImagePicked: (String?) -> Unit,
 ) {
-    val launcher = rememberLauncherForActivityResult(
+    val context = LocalContext.current
+    var sheetOpen by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+    // Survives config changes so if the system kills the activity while the
+    // camera app is foregrounded we still know where the capture was supposed
+    // to land when we come back.
+    var pendingCameraUri by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val gallery = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri -> onImagePicked(uri?.toString()) }
+
+    val camera = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { success ->
+        if (success) onImagePicked(pendingCameraUri)
+        pendingCameraUri = null
+    }
+
+    fun closeSheet(then: () -> Unit = {}) {
+        scope.launch {
+            sheetState.hide()
+            sheetOpen = false
+            then()
+        }
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Imagen referencial *", style = MaterialTheme.typography.bodyLarge)
@@ -245,11 +284,7 @@ private fun ImagePickerField(
         }
 
         OutlinedButton(
-            onClick = {
-                launcher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                )
-            },
+            onClick = { sheetOpen = true },
             modifier = Modifier.testTag(TAG_ADD_ADD_FILE),
         ) {
             Text(if (imageUri == null) "Add file" else "Replace file")
@@ -263,6 +298,59 @@ private fun ImagePickerField(
             )
         }
     }
+
+    if (sheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = { sheetOpen = false },
+            sheetState = sheetState,
+            modifier = Modifier.testTag(TAG_ADD_IMAGE_SHEET),
+        ) {
+            ListItem(
+                headlineContent = { Text("Take photo") },
+                leadingContent = {
+                    Icon(Icons.Filled.PhotoCamera, contentDescription = null)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        closeSheet {
+                            val uri = newCameraUri(context)
+                            pendingCameraUri = uri.toString()
+                            camera.launch(uri)
+                        }
+                    }
+                    .testTag(TAG_ADD_IMAGE_CAMERA),
+            )
+            ListItem(
+                headlineContent = { Text("Choose from gallery") },
+                leadingContent = {
+                    Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        closeSheet {
+                            gallery.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly,
+                                ),
+                            )
+                        }
+                    }
+                    .testTag(TAG_ADD_IMAGE_GALLERY),
+            )
+        }
+    }
+}
+
+private fun newCameraUri(context: Context): Uri {
+    val dir = File(context.cacheDir, "camera").apply { mkdirs() }
+    val file = File.createTempFile("capture_", ".jpg", dir)
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file,
+    )
 }
 
 const val TAG_ADD_ROOT = "add.root"
@@ -273,4 +361,7 @@ const val TAG_ADD_NOMBRE = "add.nombre"
 const val TAG_ADD_SERIE = "add.serie"
 const val TAG_ADD_IMAGE_PREVIEW = "add.image.preview"
 const val TAG_ADD_ADD_FILE = "add.image.add"
+const val TAG_ADD_IMAGE_SHEET = "add.image.sheet"
+const val TAG_ADD_IMAGE_CAMERA = "add.image.camera"
+const val TAG_ADD_IMAGE_GALLERY = "add.image.gallery"
 const val TAG_ADD_SUBMIT = "add.submit"

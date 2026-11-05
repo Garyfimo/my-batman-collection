@@ -11,20 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-data class LoginUiState(
-    val email: String = "",
-    val password: String = "",
-    val submitting: Boolean = false,
-    val error: String? = null,
-) {
-    val isValid: Boolean get() =
-        email.isNotBlank() && password.isNotBlank() && !submitting
-}
-
-sealed interface LoginEvent {
-    data object SignedIn : LoginEvent
-}
-
 class LoginViewModel(
     private val authRepository: AuthRepository,
 ) : ViewModel() {
@@ -32,18 +18,20 @@ class LoginViewModel(
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
-    private val _events = Channel<LoginEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
+    private val _effects = Channel<LoginEffect>(Channel.BUFFERED)
+    val effects = _effects.receiveAsFlow()
 
-    fun setEmail(value: String) {
-        _state.value = _state.value.copy(email = value, error = null)
+    fun onIntent(intent: LoginIntent) {
+        when (intent) {
+            is LoginIntent.EmailChanged ->
+                _state.value = _state.value.copy(email = intent.value, error = null)
+            is LoginIntent.PasswordChanged ->
+                _state.value = _state.value.copy(password = intent.value, error = null)
+            LoginIntent.Submitted -> submit()
+        }
     }
 
-    fun setPassword(value: String) {
-        _state.value = _state.value.copy(password = value, error = null)
-    }
-
-    fun submit() {
+    private fun submit() {
         val current = _state.value
         if (!current.isValid) return
         viewModelScope.launch {
@@ -51,7 +39,7 @@ class LoginViewModel(
             when (val result = authRepository.signIn(current.email.trim(), current.password)) {
                 SignInResult.Success -> {
                     _state.value = LoginUiState()
-                    _events.send(LoginEvent.SignedIn)
+                    _effects.send(LoginEffect.SignedIn)
                 }
                 is SignInResult.Failure -> {
                     _state.value = current.copy(submitting = false, error = result.message)
