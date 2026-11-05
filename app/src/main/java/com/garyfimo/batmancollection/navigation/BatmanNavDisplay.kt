@@ -7,10 +7,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.garyfimo.batmancollection.ui.addfigure.AddFigureScreen
-import com.garyfimo.batmancollection.ui.details.DetailsScreen
-import com.garyfimo.batmancollection.ui.home.HomeScreen
-import com.garyfimo.batmancollection.ui.login.LoginScreen
+import com.garyfimo.batmancollection.figure.presentation.LocalSharedTransitionScope
+import com.garyfimo.batmancollection.figure.presentation.addfigure.AddFigureScreen
+import com.garyfimo.batmancollection.figure.presentation.details.DetailsScreen
+import com.garyfimo.batmancollection.figure.presentation.home.HomeScreen
+import com.garyfimo.batmancollection.login.presentation.LoginScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
