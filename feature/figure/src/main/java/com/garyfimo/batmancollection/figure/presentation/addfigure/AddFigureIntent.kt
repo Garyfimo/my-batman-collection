@@ -1,6 +1,6 @@
 package com.garyfimo.batmancollection.figure.presentation.addfigure
 
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 
 sealed interface AddFigureIntent {
     data class TipoChanged(val tipo: FigureType) : AddFigureIntent

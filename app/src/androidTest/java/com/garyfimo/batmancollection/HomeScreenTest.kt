@@ -9,12 +9,13 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import com.garyfimo.batmancollection.analytics.domain.Analytics
 import com.garyfimo.batmancollection.login.domain.AuthRepository
 import com.garyfimo.batmancollection.login.domain.AuthState
 import com.garyfimo.batmancollection.figure.domain.Figure
 import com.garyfimo.batmancollection.figure.domain.FigureListResult
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import com.garyfimo.batmancollection.figure.presentation.home.HomeScreen
 import com.garyfimo.batmancollection.figure.presentation.home.HomeViewModel
 import com.garyfimo.batmancollection.figure.presentation.home.TAG_HOME_ITEM_PREFIX
@@ -53,6 +54,10 @@ class HomeScreenTest {
     private fun fakeAuth(state: AuthState = AuthState.SignedOut): AuthRepository =
         mockk<AuthRepository>().also { every { it.state } returns MutableStateFlow(state) }
 
+    private val recordingAnalytics = object : Analytics {
+        override fun track(event: String, params: Map<String, Any>) = Unit
+    }
+
     private fun waitForItem(headlineText: String) {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText(headlineText).fetchSemanticsNodes().isNotEmpty()
@@ -65,7 +70,7 @@ class HomeScreenTest {
             BatmanCollectionTheme {
                 HomeScreen(
                     onItemClick = {},
-                    viewModel = HomeViewModel(fakeRepository(), fakeAuth()),
+                    viewModel = HomeViewModel(fakeRepository(), fakeAuth(), recordingAnalytics),
                 )
             }
         }
@@ -86,7 +91,7 @@ class HomeScreenTest {
             BatmanCollectionTheme {
                 HomeScreen(
                     onItemClick = { clickedId = it },
-                    viewModel = HomeViewModel(fakeRepository(), fakeAuth()),
+                    viewModel = HomeViewModel(fakeRepository(), fakeAuth(), recordingAnalytics),
                 )
             }
         }
@@ -104,7 +109,7 @@ class HomeScreenTest {
             BatmanCollectionTheme {
                 HomeScreen(
                     onItemClick = { clickedId = it },
-                    viewModel = HomeViewModel(fakeRepository(), fakeAuth()),
+                    viewModel = HomeViewModel(fakeRepository(), fakeAuth(), recordingAnalytics),
                 )
             }
         }
@@ -128,7 +133,7 @@ class HomeScreenTest {
             BatmanCollectionTheme {
                 HomeScreen(
                     onItemClick = {},
-                    viewModel = HomeViewModel(fakeRepository(), fakeAuth()),
+                    viewModel = HomeViewModel(fakeRepository(), fakeAuth(), recordingAnalytics),
                 )
             }
         }

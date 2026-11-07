@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    api(project(":core:domain"))
     api(project(":integration:analytics"))
     api(project(":feature:login"))
 

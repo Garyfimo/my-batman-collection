@@ -14,7 +14,7 @@ import com.garyfimo.batmancollection.figure.domain.FigureLookup
 import com.garyfimo.batmancollection.login.domain.AuthRepository
 import com.garyfimo.batmancollection.login.domain.AuthState
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import com.garyfimo.batmancollection.navigation.BatmanNavDisplay
 import com.garyfimo.batmancollection.figure.presentation.addfigure.AddFigureViewModel
 import com.garyfimo.batmancollection.figure.presentation.details.DetailsViewModel
@@ -22,8 +22,15 @@ import com.garyfimo.batmancollection.figure.presentation.details.TAG_DETAILS_CON
 import com.garyfimo.batmancollection.figure.presentation.home.HomeViewModel
 import com.garyfimo.batmancollection.figure.presentation.home.TAG_HOME_ITEM_PREFIX
 import com.garyfimo.batmancollection.figure.presentation.home.TAG_HOME_ROOT
+import com.garyfimo.batmancollection.figure.presentation.home.TAG_HOME_WISHLIST
 import com.garyfimo.batmancollection.ui.theme.BatmanCollectionTheme
 import com.garyfimo.batmancollection.login.presentation.LoginViewModel
+import com.garyfimo.batmancollection.analytics.domain.Analytics
+import com.garyfimo.batmancollection.wishlist.domain.WishListResult
+import com.garyfimo.batmancollection.wishlist.domain.WishRepository
+import com.garyfimo.batmancollection.wishlist.presentation.addwish.AddWishViewModel
+import com.garyfimo.batmancollection.wishlist.presentation.wishlist.TAG_WISH_ROOT
+import com.garyfimo.batmancollection.wishlist.presentation.wishlist.WishlistViewModel
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -70,19 +77,30 @@ class BatmanNavDisplayTest {
             coEvery { it.get(bruce.id) } returns FigureLookup.Found(bruce)
             coEvery { it.get(mobile.id) } returns FigureLookup.Found(mobile)
         }
+        val wishRepository: WishRepository = mockk<WishRepository>(relaxed = true).also {
+            every { it.observe() } returns flowOf(WishListResult.Success(emptyList()))
+        }
         startKoin {
             modules(
                 module {
                     single<FigureRepository> { repository }
+                    single<WishRepository> { wishRepository }
                     single<AuthRepository> {
                         mockk<AuthRepository>().also {
                             every { it.state } returns MutableStateFlow<AuthState>(AuthState.SignedOut)
+                        }
+                    }
+                    single<Analytics> {
+                        object : Analytics {
+                            override fun track(event: String, params: Map<String, Any>) = Unit
                         }
                     }
                     viewModelOf(::HomeViewModel)
                     viewModel { (id: String) -> DetailsViewModel(id = id, repository = get()) }
                     viewModelOf(::AddFigureViewModel)
                     viewModelOf(::LoginViewModel)
+                    viewModelOf(::WishlistViewModel)
+                    viewModelOf(::AddWishViewModel)
                 },
             )
         }
@@ -134,6 +152,24 @@ class BatmanNavDisplayTest {
         }
         composeRule.onNodeWithTag(TAG_DETAILS_CONTENT).assertIsDisplayed()
         composeRule.onNodeWithText(mobile.serie).assertIsDisplayed()
+    }
+
+    @Test
+    fun navDisplay_tappingWishlistIcon_navigatesToWishlist() {
+        start()
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(bruce.nombre).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithTag(TAG_HOME_WISHLIST).performClick()
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        composeRule.waitForIdle()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(TAG_WISH_ROOT).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(TAG_WISH_ROOT).assertIsDisplayed()
     }
 
     @Test

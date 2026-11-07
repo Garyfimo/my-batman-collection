@@ -1,7 +1,7 @@
 package com.garyfimo.batmancollection.figure.presentation.home
 
 import com.garyfimo.batmancollection.figure.domain.Figure
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 
 sealed interface HomeUiState {
     data object Loading : HomeUiState

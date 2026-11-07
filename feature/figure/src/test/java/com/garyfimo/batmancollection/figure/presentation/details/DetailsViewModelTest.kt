@@ -4,7 +4,7 @@ import app.cash.turbine.test
 import com.garyfimo.batmancollection.figure.domain.Figure
 import com.garyfimo.batmancollection.figure.domain.FigureLookup
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

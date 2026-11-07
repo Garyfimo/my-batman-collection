@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -85,7 +86,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
 import com.garyfimo.batmancollection.figure.domain.Figure
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import com.garyfimo.batmancollection.login.domain.canAddFigures
 import com.garyfimo.batmancollection.figure.presentation.LocalSharedTransitionScope
 import com.garyfimo.batmancollection.figure.presentation.batmanImageSharedKey
@@ -99,6 +100,7 @@ fun HomeScreen(
     onItemClick: (String) -> Unit,
     onAddFigure: () -> Unit = {},
     onSignIn: () -> Unit = {},
+    onWishlist: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -198,6 +200,15 @@ fun HomeScreen(
                     },
                     actions = {
                         if (!isSearching) {
+                            IconButton(
+                                onClick = onWishlist,
+                                modifier = Modifier.testTag(TAG_HOME_WISHLIST),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.FavoriteBorder,
+                                    contentDescription = "Wish list",
+                                )
+                            }
                             IconButton(
                                 onClick = {
                                     viewModel.onIntent(HomeIntent.SearchOpened)
@@ -593,6 +604,7 @@ const val TAG_HOME_FILTER_PREFIX = "home.filter."
 const val TAG_HOME_ITEM_PREFIX = "home.item."
 const val TAG_HOME_THUMB_PREFIX = "home.thumb."
 const val TAG_HOME_DELETE_PREFIX = "home.delete."
+const val TAG_HOME_WISHLIST = "home.wishlist"
 const val TAG_HOME_SEARCH_OPEN = "home.search.open"
 const val TAG_HOME_SEARCH_CLOSE = "home.search.close"
 const val TAG_HOME_SEARCH_CLEAR = "home.search.clear"

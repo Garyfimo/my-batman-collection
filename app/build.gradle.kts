@@ -62,6 +62,7 @@ dependencies {
     implementation(project(":integration:analytics"))
     implementation(project(":feature:login"))
     implementation(project(":feature:figure"))
+    implementation(project(":feature:wishlist"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

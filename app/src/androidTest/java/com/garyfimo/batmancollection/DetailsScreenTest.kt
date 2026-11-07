@@ -12,7 +12,7 @@ import androidx.compose.ui.test.performClick
 import com.garyfimo.batmancollection.figure.domain.Figure
 import com.garyfimo.batmancollection.figure.domain.FigureLookup
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import com.garyfimo.batmancollection.figure.presentation.details.DetailsScreen
 import com.garyfimo.batmancollection.figure.presentation.details.DetailsViewModel
 import com.garyfimo.batmancollection.figure.presentation.details.TAG_DETAILS_CONTENT

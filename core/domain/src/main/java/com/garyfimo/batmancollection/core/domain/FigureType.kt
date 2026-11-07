@@ -1,4 +1,4 @@
-package com.garyfimo.batmancollection.figure.domain
+package com.garyfimo.batmancollection.core.domain
 
 enum class FigureType(val label: String) {
     Funko("Funko"),

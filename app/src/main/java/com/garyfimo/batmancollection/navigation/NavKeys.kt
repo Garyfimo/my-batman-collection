@@ -14,3 +14,9 @@ data object AddFigureKey : NavKey
 
 @Serializable
 data object LoginKey : NavKey
+
+@Serializable
+data object WishlistKey : NavKey
+
+@Serializable
+data object AddWishKey : NavKey

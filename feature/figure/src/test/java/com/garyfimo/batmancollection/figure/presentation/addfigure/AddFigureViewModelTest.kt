@@ -5,7 +5,7 @@ import com.garyfimo.batmancollection.analytics.domain.Analytics
 import com.garyfimo.batmancollection.figure.domain.FigureAddResult
 import com.garyfimo.batmancollection.figure.domain.FigureDraft
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk

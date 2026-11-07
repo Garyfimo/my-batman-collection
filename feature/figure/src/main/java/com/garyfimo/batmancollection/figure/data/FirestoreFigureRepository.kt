@@ -8,7 +8,7 @@ import com.garyfimo.batmancollection.figure.domain.FigureListResult
 import com.garyfimo.batmancollection.figure.domain.FigureLookup
 import com.garyfimo.batmancollection.figure.domain.FigureRemoveResult
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
