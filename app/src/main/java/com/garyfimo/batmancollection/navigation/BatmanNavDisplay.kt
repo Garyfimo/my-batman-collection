@@ -12,6 +12,8 @@ import com.garyfimo.batmancollection.figure.presentation.addfigure.AddFigureScre
 import com.garyfimo.batmancollection.figure.presentation.details.DetailsScreen
 import com.garyfimo.batmancollection.figure.presentation.home.HomeScreen
 import com.garyfimo.batmancollection.login.presentation.LoginScreen
+import com.garyfimo.batmancollection.wishlist.presentation.addwish.AddWishScreen
+import com.garyfimo.batmancollection.wishlist.presentation.wishlist.WishlistScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -29,6 +31,7 @@ fun BatmanNavDisplay() {
                             onItemClick = { id -> backStack.add(DetailsKey(id)) },
                             onAddFigure = { backStack.add(AddFigureKey) },
                             onSignIn = { backStack.add(LoginKey) },
+                            onWishlist = { backStack.add(WishlistKey) },
                         )
                     }
                     entry<DetailsKey> { key ->
@@ -44,6 +47,17 @@ fun BatmanNavDisplay() {
                     }
                     entry<LoginKey> {
                         LoginScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
+                    entry<WishlistKey> {
+                        WishlistScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            onAddWish = { backStack.add(AddWishKey) },
+                        )
+                    }
+                    entry<AddWishKey> {
+                        AddWishScreen(
                             onBack = { backStack.removeLastOrNull() },
                         )
                     }

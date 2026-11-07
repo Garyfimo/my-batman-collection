@@ -9,6 +9,7 @@ import coil3.request.crossfade
 import com.garyfimo.batmancollection.di.appModule
 import com.garyfimo.batmancollection.figure.di.figureModule
 import com.garyfimo.batmancollection.login.di.loginModule
+import com.garyfimo.batmancollection.wishlist.di.wishlistModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -20,7 +21,7 @@ class BatmanApp : Application(), SingletonImageLoader.Factory {
         startKoin {
             androidLogger(Level.INFO)
             androidContext(this@BatmanApp)
-            modules(appModule, loginModule, figureModule)
+            modules(appModule, loginModule, figureModule, wishlistModule)
         }
     }
 

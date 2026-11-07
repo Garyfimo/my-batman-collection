@@ -8,7 +8,7 @@ import com.garyfimo.batmancollection.figure.domain.Figure
 import com.garyfimo.batmancollection.figure.domain.FigureListResult
 import com.garyfimo.batmancollection.figure.domain.FigureRemoveResult
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

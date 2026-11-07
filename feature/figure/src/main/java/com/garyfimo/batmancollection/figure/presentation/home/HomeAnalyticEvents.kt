@@ -4,7 +4,7 @@ import com.garyfimo.batmancollection.analytics.domain.Analytics
 import com.garyfimo.batmancollection.analytics.domain.Events
 import com.garyfimo.batmancollection.analytics.domain.Params
 import com.garyfimo.batmancollection.figure.domain.Figure
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 
 class HomeAnalyticEvents(private val analytics: Analytics) {
 

@@ -1,6 +1,6 @@
 package com.garyfimo.batmancollection.figure.presentation.addfigure
 
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 
 data class AddFigureFormState(
     val tipo: FigureType? = null,

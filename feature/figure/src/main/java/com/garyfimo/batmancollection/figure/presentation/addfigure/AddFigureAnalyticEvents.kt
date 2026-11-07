@@ -4,7 +4,7 @@ import com.garyfimo.batmancollection.analytics.domain.Analytics
 import com.garyfimo.batmancollection.analytics.domain.Events
 import com.garyfimo.batmancollection.analytics.domain.Params
 import com.garyfimo.batmancollection.figure.domain.FigureDraft
-import com.garyfimo.batmancollection.figure.domain.FigureType
+import com.garyfimo.batmancollection.core.domain.FigureType
 
 class AddFigureAnalyticEvents(private val analytics: Analytics) {
 
