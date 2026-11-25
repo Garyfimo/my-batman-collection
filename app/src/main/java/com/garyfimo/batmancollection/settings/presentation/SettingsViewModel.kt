@@ -27,7 +27,9 @@ class SettingsViewModel(
     private fun onPaletteSelected(intent: SettingsIntent.PaletteSelected) {
         val current = state.value.selected
         if (intent.palette == current) return
-        viewModelScope.launch { preferences.setPalette(intent.palette) }
-        analyticEvents.onPaletteChanged(from = current, to = intent.palette)
+        viewModelScope.launch {
+            preferences.setPalette(intent.palette)
+            analyticEvents.onPaletteChanged(from = current, to = intent.palette)
+        }
     }
 }

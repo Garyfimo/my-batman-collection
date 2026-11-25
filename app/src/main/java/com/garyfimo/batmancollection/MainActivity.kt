@@ -11,6 +11,7 @@ import com.garyfimo.batmancollection.navigation.BatmanNavDisplay
 import com.garyfimo.batmancollection.preferences.domain.PalettePreferences
 import com.garyfimo.batmancollection.ui.theme.BatmanCollectionTheme
 import com.garyfimo.batmancollection.ui.theme.BatmanPalette
+import java.io.IOException
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
@@ -25,7 +26,11 @@ class MainActivity : ComponentActivity() {
         splash.setKeepOnScreenCondition { initialPalette == null }
 
         lifecycleScope.launch {
-            val initial = preferences.initialPalette()
+            val initial = try {
+                preferences.initialPalette()
+            } catch (e: IOException) {
+                BatmanPalette.CLASSIC
+            }
             initialPalette = initial
             setContent {
                 val palette by preferences.palette()
