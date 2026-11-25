@@ -1,3 +1,3 @@
 package com.garyfimo.batmancollection.ui.theme
 
-enum class BatmanPalette { CLASSIC, NOIR }
+enum class BatmanPalette { CLASSIC, NOIR, DARK_KNIGHT }

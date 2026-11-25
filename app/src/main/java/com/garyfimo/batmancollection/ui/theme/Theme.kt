@@ -23,6 +23,7 @@ fun BatmanCollectionTheme(
     val colorScheme = when (palette) {
         BatmanPalette.CLASSIC -> if (darkTheme) ClassicDarkColorScheme else ClassicLightColorScheme
         BatmanPalette.NOIR -> if (darkTheme) NoirDarkColorScheme else NoirLightColorScheme
+        BatmanPalette.DARK_KNIGHT -> if (darkTheme) DarkKnightDarkColorScheme else DarkKnightLightColorScheme
     }
 
     val view = LocalView.current

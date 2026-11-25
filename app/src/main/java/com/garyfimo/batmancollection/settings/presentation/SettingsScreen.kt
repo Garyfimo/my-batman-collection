@@ -99,6 +99,28 @@ fun SettingsScreen(
                     )
                     .testTag(TAG_SETTINGS_ROW_NOIR),
             )
+            ListItem(
+                headlineContent = { Text("Dark Knight") },
+                supportingContent = { Text("Bat-yellow on pure black") },
+                trailingContent = {
+                    RadioButton(
+                        selected = state.selected == BatmanPalette.DARK_KNIGHT,
+                        onClick = null,
+                        modifier = Modifier
+                            .testTag(TAG_SETTINGS_RADIO_DARK_KNIGHT)
+                            .semantics { selected = state.selected == BatmanPalette.DARK_KNIGHT },
+                    )
+                },
+                modifier = Modifier
+                    .selectable(
+                        selected = state.selected == BatmanPalette.DARK_KNIGHT,
+                        role = Role.RadioButton,
+                        onClick = {
+                            viewModel.onIntent(SettingsIntent.PaletteSelected(BatmanPalette.DARK_KNIGHT))
+                        },
+                    )
+                    .testTag(TAG_SETTINGS_ROW_DARK_KNIGHT),
+            )
         }
     }
 }
@@ -107,5 +129,7 @@ const val TAG_SETTINGS_ROOT = "settings.root"
 const val TAG_SETTINGS_BACK = "settings.back"
 const val TAG_SETTINGS_ROW_CLASSIC = "settings.row.classic"
 const val TAG_SETTINGS_ROW_NOIR = "settings.row.noir"
+const val TAG_SETTINGS_ROW_DARK_KNIGHT = "settings.row.dark_knight"
 const val TAG_SETTINGS_RADIO_CLASSIC = "settings.radio.classic"
 const val TAG_SETTINGS_RADIO_NOIR = "settings.radio.noir"
+const val TAG_SETTINGS_RADIO_DARK_KNIGHT = "settings.radio.dark_knight"
