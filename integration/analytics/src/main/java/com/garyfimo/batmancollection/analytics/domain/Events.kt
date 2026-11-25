@@ -15,4 +15,5 @@ object Events {
     const val ADD_WISH_SUBMITTED = "add_wish_submitted"
     const val WISH_ADDED = "wish_added"
     const val WISH_ADD_FAILED = "wish_add_failed"
+    const val PALETTE_CHANGED = "palette_changed"
 }
