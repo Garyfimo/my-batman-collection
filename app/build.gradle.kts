@@ -100,4 +100,9 @@ dependencies {
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.koin.test)
     androidTestImplementation(libs.koin.test.junit4)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
