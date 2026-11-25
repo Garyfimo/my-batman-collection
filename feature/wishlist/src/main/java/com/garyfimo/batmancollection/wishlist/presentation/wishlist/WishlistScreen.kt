@@ -100,6 +100,8 @@ fun WishlistScreen(
             if (canAdd) {
                 FloatingActionButton(
                     onClick = onAddWish,
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
                     modifier = Modifier.testTag(TAG_WISH_ADD_FAB),
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = "Add wish")

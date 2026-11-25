@@ -298,6 +298,8 @@ fun HomeScreen(
                 if (canAdd) {
                     FloatingActionButton(
                         onClick = onAddFigure,
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.testTag(TAG_HOME_ADD_FAB),
                     ) {
                         Icon(Icons.Filled.Add, contentDescription = "Add figure")
