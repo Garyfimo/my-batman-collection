@@ -20,3 +20,6 @@ data object WishlistKey : NavKey
 
 @Serializable
 data object AddWishKey : NavKey
+
+@Serializable
+data object SettingsKey : NavKey
