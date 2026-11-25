@@ -43,6 +43,9 @@ compose_compiler_config.conf
 # Koin
 # Koin generated verification/config (KSP outputs land in build/, already ignored)
 
+# Superpowers brainstorm / scratchpad
+.superpowers/
+
 # Unit tests
 **/test-results/
 **/jacoco/

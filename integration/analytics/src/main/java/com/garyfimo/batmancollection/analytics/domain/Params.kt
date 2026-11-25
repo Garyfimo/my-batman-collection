@@ -14,4 +14,6 @@ object Params {
     const val ID_MULTIPRODUCT_JOURNEY = "id_multiproduct_journey"
     const val JOURNEY_ID = "journey_id"
     const val ID_EVENT = "id_event"
+    const val PALETTE_FAMILY_FROM = "palette_family_from"
+    const val PALETTE_FAMILY_TO = "palette_family_to"
 }

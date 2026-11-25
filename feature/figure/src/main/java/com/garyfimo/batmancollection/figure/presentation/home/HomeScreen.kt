@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -101,6 +102,7 @@ fun HomeScreen(
     onAddFigure: () -> Unit = {},
     onSignIn: () -> Unit = {},
     onWishlist: () -> Unit = {},
+    onSettings: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -258,6 +260,15 @@ fun HomeScreen(
                                     }
                                 }
                             }
+                            IconButton(
+                                onClick = onSettings,
+                                modifier = Modifier.testTag(TAG_HOME_SETTINGS),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Settings,
+                                    contentDescription = "Settings",
+                                )
+                            }
                             if (authState is com.garyfimo.batmancollection.login.domain.AuthState.SignedIn) {
                                 IconButton(
                                     onClick = { viewModel.onIntent(HomeIntent.SignedOut) },
@@ -287,6 +298,8 @@ fun HomeScreen(
                 if (canAdd) {
                     FloatingActionButton(
                         onClick = onAddFigure,
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.testTag(TAG_HOME_ADD_FAB),
                     ) {
                         Icon(Icons.Filled.Add, contentDescription = "Add figure")
@@ -605,6 +618,7 @@ const val TAG_HOME_ITEM_PREFIX = "home.item."
 const val TAG_HOME_THUMB_PREFIX = "home.thumb."
 const val TAG_HOME_DELETE_PREFIX = "home.delete."
 const val TAG_HOME_WISHLIST = "home.wishlist"
+const val TAG_HOME_SETTINGS = "home.settings"
 const val TAG_HOME_SEARCH_OPEN = "home.search.open"
 const val TAG_HOME_SEARCH_CLOSE = "home.search.close"
 const val TAG_HOME_SEARCH_CLEAR = "home.search.clear"

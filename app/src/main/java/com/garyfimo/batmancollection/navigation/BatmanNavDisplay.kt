@@ -12,6 +12,7 @@ import com.garyfimo.batmancollection.figure.presentation.addfigure.AddFigureScre
 import com.garyfimo.batmancollection.figure.presentation.details.DetailsScreen
 import com.garyfimo.batmancollection.figure.presentation.home.HomeScreen
 import com.garyfimo.batmancollection.login.presentation.LoginScreen
+import com.garyfimo.batmancollection.settings.presentation.SettingsScreen
 import com.garyfimo.batmancollection.wishlist.presentation.addwish.AddWishScreen
 import com.garyfimo.batmancollection.wishlist.presentation.wishlist.WishlistScreen
 
@@ -32,6 +33,7 @@ fun BatmanNavDisplay() {
                             onAddFigure = { backStack.add(AddFigureKey) },
                             onSignIn = { backStack.add(LoginKey) },
                             onWishlist = { backStack.add(WishlistKey) },
+                            onSettings = { backStack.add(SettingsKey) },
                         )
                     }
                     entry<DetailsKey> { key ->
@@ -58,6 +60,11 @@ fun BatmanNavDisplay() {
                     }
                     entry<AddWishKey> {
                         AddWishScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
+                    entry<SettingsKey> {
+                        SettingsScreen(
                             onBack = { backStack.removeLastOrNull() },
                         )
                     }
