@@ -136,7 +136,11 @@ class FirestoreFigureRepository(
 
         val outFile = File.createTempFile("figure_upload_", ".jpg", context.cacheDir)
         FileOutputStream(outFile).use { out ->
-            scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)
+            // compress() returns false on native encoder failure without throwing;
+            // without this check an empty/truncated temp file would upload as a "successful" add.
+            check(scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)) {
+                "JPEG compression failed for $source"
+            }
         }
 
         if (scaled !== oriented) scaled.recycle()
