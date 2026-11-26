@@ -1,6 +1,7 @@
 package com.garyfimo.batmancollection.figure.presentation.details
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -124,6 +128,10 @@ private fun FigureDetails(figure: Figure) {
         baseImageModifier
     }
 
+    // rememberSaveable so a rotation while the full-screen view is open restores it.
+    var showFullImage by rememberSaveable { mutableStateOf(false) }
+    val imageContentDescription = "${figure.nombre} — ${figure.tipo.label}"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -134,13 +142,23 @@ private fun FigureDetails(figure: Figure) {
     ) {
         AsyncImage(
             model = figure.imageUrl,
-            contentDescription = "${figure.nombre} — ${figure.tipo.label}",
+            contentDescription = imageContentDescription,
             contentScale = ContentScale.Crop,
-            modifier = imageModifier.testTag(TAG_DETAILS_IMAGE),
+            modifier = imageModifier
+                .clickable { showFullImage = true }
+                .testTag(TAG_DETAILS_IMAGE),
         )
         Text(figure.nombre, style = MaterialTheme.typography.headlineMedium)
         LabeledLine("Tipo", figure.tipo.label)
         LabeledLine("Serie", figure.serie)
+    }
+
+    if (showFullImage) {
+        FullScreenImageDialog(
+            imageUrl = figure.imageUrl,
+            contentDescription = imageContentDescription,
+            onDismiss = { showFullImage = false },
+        )
     }
 }
 
