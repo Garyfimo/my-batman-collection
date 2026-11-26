@@ -7,6 +7,7 @@ import com.garyfimo.batmancollection.figure.presentation.details.DetailsViewMode
 import com.garyfimo.batmancollection.figure.presentation.home.HomeViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -16,7 +17,7 @@ private const val FIRESTORE_DATABASE_ID = "my-batman-collection"
 val figureModule = module {
     single { FirebaseFirestore.getInstance(FIRESTORE_DATABASE_ID) }
     single { FirebaseStorage.getInstance() }
-    single<FigureRepository> { FirestoreFigureRepository(get(), get()) }
+    single<FigureRepository> { FirestoreFigureRepository(get(), get(), androidContext()) }
     viewModelOf(::HomeViewModel)
     viewModel { (id: String) -> DetailsViewModel(id = id, repository = get()) }
     viewModelOf(::AddFigureViewModel)

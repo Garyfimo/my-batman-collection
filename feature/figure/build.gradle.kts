@@ -63,6 +63,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
+    implementation(libs.androidx.exifinterface)
+
     api(libs.androidx.navigation3.runtime)
     api(libs.androidx.navigation3.ui)
 
