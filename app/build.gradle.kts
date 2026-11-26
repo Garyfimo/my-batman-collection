@@ -19,13 +19,49 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing reads keystore details from environment variables so the
+    // keystore itself never lives in the repo. Fresh clones (CI, contributors)
+    // have none of these set; in that case we fall back to the debug signing
+    // config so `./gradlew :app:assembleRelease` still succeeds — the resulting
+    // APK is not distributable, but the build pipeline is verifiable.
+    val releaseKeystorePath: String? = System.getenv("BATMAN_KEYSTORE_PATH")
+    val releaseKeystorePassword: String? = System.getenv("BATMAN_KEYSTORE_PASSWORD")
+    val releaseKeyAlias: String? = System.getenv("BATMAN_KEY_ALIAS")
+    val releaseKeyPassword: String? = System.getenv("BATMAN_KEY_PASSWORD")
+    val releaseSigningConfigured = releaseKeystorePath != null &&
+        releaseKeystorePassword != null &&
+        releaseKeyAlias != null &&
+        releaseKeyPassword != null
+
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            create("release") {
+                storeFile = file(releaseKeystorePath!!)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = if (releaseSigningConfigured) {
+                signingConfigs.getByName("release")
+            } else {
+                println(
+                    "WARNING: BATMAN_KEYSTORE_PATH / BATMAN_KEYSTORE_PASSWORD / " +
+                        "BATMAN_KEY_ALIAS / BATMAN_KEY_PASSWORD not set — release APK " +
+                        "will be signed with the debug key and is NOT distributable.",
+                )
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
