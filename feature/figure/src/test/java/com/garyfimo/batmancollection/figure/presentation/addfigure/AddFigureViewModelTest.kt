@@ -2,9 +2,12 @@ package com.garyfimo.batmancollection.figure.presentation.addfigure
 
 import app.cash.turbine.test
 import com.garyfimo.batmancollection.analytics.domain.Analytics
+import com.garyfimo.batmancollection.figure.domain.Figure
 import com.garyfimo.batmancollection.figure.domain.FigureAddResult
 import com.garyfimo.batmancollection.figure.domain.FigureDraft
+import com.garyfimo.batmancollection.figure.domain.FigureLookup
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
+import com.garyfimo.batmancollection.figure.domain.FigureUpdateResult
 import com.garyfimo.batmancollection.core.domain.FigureType
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -97,6 +100,109 @@ class AddFigureViewModelTest {
             )
         }
         assertEquals(AddFigureFormState(), viewModel.state.value)
+    }
+
+    @Test
+    fun `editor prefills form from the existing figure`() = runTest(dispatcher) {
+        val existing = Figure(
+            id = "fig-1",
+            tipo = FigureType.Funko,
+            nombre = "Bruce Wayne",
+            serie = "DC Pop! Heroes",
+            imageUrl = "https://example.test/img.jpg",
+        )
+        coEvery { repository.get("fig-1") } returns FigureLookup.Found(existing)
+
+        val viewModel = AddFigureViewModel(repository, analytics, existingId = "fig-1")
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals("fig-1", state.existingId)
+        assertTrue(state.isEditing)
+        assertFalse(state.loading)
+        assertEquals(FigureType.Funko, state.tipo)
+        assertEquals("Bruce Wayne", state.nombre)
+        assertEquals("DC Pop! Heroes", state.serie)
+        assertEquals("https://example.test/img.jpg", state.imageUri)
+    }
+
+    @Test
+    fun `successful edit calls update and emits Saved without resetting the form`() = runTest(dispatcher) {
+        val existing = Figure(
+            id = "fig-1",
+            tipo = FigureType.Funko,
+            nombre = "Bruce Wayne",
+            serie = "DC Pop! Heroes",
+            imageUrl = "https://example.test/img.jpg",
+        )
+        coEvery { repository.get("fig-1") } returns FigureLookup.Found(existing)
+        coEvery { repository.update(any(), any()) } returns FigureUpdateResult.Success
+
+        val viewModel = AddFigureViewModel(repository, analytics, existingId = "fig-1")
+        advanceUntilIdle()
+        viewModel.onIntent(AddFigureIntent.NombreChanged("Batman"))
+
+        viewModel.effects.test {
+            viewModel.onIntent(AddFigureIntent.Submitted)
+            advanceUntilIdle()
+            assertEquals(AddFigureEffect.Saved, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            repository.update(
+                "fig-1",
+                FigureDraft(
+                    tipo = FigureType.Funko,
+                    nombre = "Batman",
+                    serie = "DC Pop! Heroes",
+                    imageUri = "https://example.test/img.jpg",
+                ),
+            )
+        }
+        coVerify(exactly = 0) { repository.add(any()) }
+        // The form stays prefilled; the screen navigates away via the Saved effect.
+        assertEquals("Batman", viewModel.state.value.nombre)
+    }
+
+    @Test
+    fun `edit with NotFound figure emits SubmitFailed`() = runTest(dispatcher) {
+        coEvery { repository.get("missing") } returns FigureLookup.NotFound
+        val viewModel = AddFigureViewModel(repository, analytics, existingId = "missing")
+
+        viewModel.effects.test {
+            advanceUntilIdle()
+            assertEquals(AddFigureEffect.SubmitFailed("Figure not found"), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        assertFalse(viewModel.state.value.loading)
+    }
+
+    @Test
+    fun `failed update emits SubmitFailed and keeps the form`() = runTest(dispatcher) {
+        val existing = Figure(
+            id = "fig-1",
+            tipo = FigureType.HotWheels,
+            nombre = "Batmobile",
+            serie = "103/250",
+            imageUrl = "https://example.test/img.jpg",
+        )
+        coEvery { repository.get("fig-1") } returns FigureLookup.Found(existing)
+        coEvery { repository.update(any(), any()) } returns
+            FigureUpdateResult.Failure(IllegalStateException("network"))
+
+        val viewModel = AddFigureViewModel(repository, analytics, existingId = "fig-1")
+        advanceUntilIdle()
+
+        viewModel.effects.test {
+            viewModel.onIntent(AddFigureIntent.Submitted)
+            advanceUntilIdle()
+            assertEquals(AddFigureEffect.SubmitFailed("network"), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        val state = viewModel.state.value
+        assertEquals("Batmobile", state.nombre)
+        assertFalse(state.submitting)
     }
 
     @Test

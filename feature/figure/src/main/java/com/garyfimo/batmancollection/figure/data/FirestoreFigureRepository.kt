@@ -13,6 +13,7 @@ import com.garyfimo.batmancollection.figure.domain.FigureListResult
 import com.garyfimo.batmancollection.figure.domain.FigureLookup
 import com.garyfimo.batmancollection.figure.domain.FigureRemoveResult
 import com.garyfimo.batmancollection.figure.domain.FigureRepository
+import com.garyfimo.batmancollection.figure.domain.FigureUpdateResult
 import com.garyfimo.batmancollection.core.domain.FigureType
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -101,6 +102,49 @@ class FirestoreFigureRepository(
             tempFile?.delete()
         }
     }
+
+    override suspend fun update(id: String, draft: FigureDraft): FigureUpdateResult {
+        var tempFile: File? = null
+        return try {
+            val docRef = firestore.collection(COLLECTION).document(id)
+            val existing = docRef.get().await()
+            if (!existing.exists()) return FigureUpdateResult.NotFound
+
+            // The editor hands us either a brand-new local URI (content:// or file://)
+            // or the URL the figure already stored. Re-upload only in the first case;
+            // otherwise the image hasn't changed and we keep the existing URL.
+            val imageUrl = if (isLocalUri(draft.imageUri)) {
+                tempFile = resizeToJpegFile(Uri.parse(draft.imageUri))
+                val metadata = StorageMetadata.Builder()
+                    .setContentType("image/jpeg")
+                    .setCacheControl(CACHE_CONTROL)
+                    .build()
+                val imageRef = storage.reference.child("$COLLECTION/$id.jpg")
+                imageRef.putFile(Uri.fromFile(tempFile), metadata).await()
+                imageRef.downloadUrl.await().toString()
+            } else {
+                draft.imageUri
+            }
+
+            docRef.update(
+                mapOf(
+                    "tipo" to draft.tipo.label,
+                    "nombre" to draft.nombre,
+                    "serie" to draft.serie,
+                    "imageUrl" to imageUrl,
+                ),
+            ).await()
+
+            FigureUpdateResult.Success
+        } catch (t: Throwable) {
+            FigureUpdateResult.Failure(t)
+        } finally {
+            tempFile?.delete()
+        }
+    }
+
+    private fun isLocalUri(uri: String): Boolean =
+        uri.startsWith("content://") || uri.startsWith("file://")
 
     override suspend fun remove(id: String): FigureRemoveResult = try {
         // Delete the Firestore doc first so the user's list updates immediately via the

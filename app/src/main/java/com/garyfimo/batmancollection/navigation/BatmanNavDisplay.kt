@@ -40,11 +40,18 @@ fun BatmanNavDisplay() {
                         DetailsScreen(
                             id = key.id,
                             onBack = { backStack.removeLastOrNull() },
+                            onEdit = { id -> backStack.add(EditFigureKey(id)) },
                         )
                     }
                     entry<AddFigureKey> {
                         AddFigureScreen(
                             onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
+                    entry<EditFigureKey> { key ->
+                        AddFigureScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            existingId = key.id,
                         )
                     }
                     entry<LoginKey> {

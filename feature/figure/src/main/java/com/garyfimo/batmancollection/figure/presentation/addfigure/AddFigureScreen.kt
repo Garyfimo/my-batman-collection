@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -64,13 +65,17 @@ import java.io.File
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddFigureScreen(
     onBack: () -> Unit,
     onSubmitted: () -> Unit = onBack,
-    viewModel: AddFigureViewModel = koinViewModel(),
+    existingId: String? = null,
+    viewModel: AddFigureViewModel = koinViewModel(
+        key = existingId ?: "add",
+    ) { parametersOf(existingId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -91,7 +96,7 @@ fun AddFigureScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add figure") },
+                title = { Text(if (state.isEditing) "Edit figure" else "Add figure") },
                 navigationIcon = {
                     IconButton(onClick = onBack, modifier = Modifier.testTag(TAG_ADD_BACK)) {
                         Icon(
@@ -107,17 +112,35 @@ fun AddFigureScreen(
             Surface(tonalElevation = 3.dp) {
                 Button(
                     onClick = { viewModel.onIntent(AddFigureIntent.Submitted) },
-                    enabled = state.isValid && !state.submitting,
+                    enabled = state.isValid && !state.submitting && !state.loading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                         .testTag(TAG_ADD_SUBMIT),
                 ) {
-                    Text(if (state.submitting) "Submitting..." else "Submit")
+                    Text(
+                        when {
+                            state.submitting -> "Submitting..."
+                            state.isEditing -> "Save changes"
+                            else -> "Submit"
+                        },
+                    )
                 }
             }
         },
     ) { padding ->
+        if (state.loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .testTag(TAG_ADD_LOADING),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -355,6 +378,7 @@ private fun newCameraUri(context: Context): Uri {
 }
 
 const val TAG_ADD_ROOT = "add.root"
+const val TAG_ADD_LOADING = "add.loading"
 const val TAG_ADD_BACK = "add.back"
 const val TAG_ADD_TIPO = "add.tipo"
 const val TAG_ADD_TIPO_OPTION_PREFIX = "add.tipo.option."

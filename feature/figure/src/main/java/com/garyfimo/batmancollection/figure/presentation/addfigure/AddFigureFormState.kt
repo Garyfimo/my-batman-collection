@@ -3,6 +3,8 @@ package com.garyfimo.batmancollection.figure.presentation.addfigure
 import com.garyfimo.batmancollection.core.domain.FigureType
 
 data class AddFigureFormState(
+    val existingId: String? = null,
+    val loading: Boolean = false,
     val tipo: FigureType? = null,
     val nombre: String = "",
     val serie: String = "",
@@ -10,6 +12,8 @@ data class AddFigureFormState(
     val submitAttempted: Boolean = false,
     val submitting: Boolean = false,
 ) {
+    val isEditing: Boolean get() = existingId != null
+
     val tipoError: String? get() =
         if (submitAttempted && tipo == null) ERROR_REQUIRED else null
     val nombreError: String? get() =
