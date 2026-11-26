@@ -6,5 +6,6 @@ interface FigureRepository {
     fun observe(): Flow<FigureListResult>
     suspend fun get(id: String): FigureLookup
     suspend fun add(draft: FigureDraft): FigureAddResult
+    suspend fun update(id: String, draft: FigureDraft): FigureUpdateResult
     suspend fun remove(id: String): FigureRemoveResult
 }

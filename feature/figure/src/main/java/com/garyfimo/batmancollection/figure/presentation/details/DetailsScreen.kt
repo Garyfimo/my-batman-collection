@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,6 +44,7 @@ import org.koin.core.parameter.parametersOf
 fun DetailsScreen(
     id: String,
     onBack: () -> Unit,
+    onEdit: (String) -> Unit = {},
     viewModel: DetailsViewModel = koinViewModel(key = id) { parametersOf(id) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -60,6 +62,19 @@ fun DetailsScreen(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                         )
+                    }
+                },
+                actions = {
+                    if (state is DetailsUiState.Ready) {
+                        IconButton(
+                            onClick = { onEdit(id) },
+                            modifier = Modifier.testTag(TAG_DETAILS_EDIT),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = "Edit",
+                            )
+                        }
                     }
                 },
             )
@@ -149,3 +164,4 @@ const val TAG_DETAILS_NOT_FOUND = "details.notFound"
 const val TAG_DETAILS_CONTENT = "details.content"
 const val TAG_DETAILS_IMAGE = "details.image"
 const val TAG_DETAILS_BACK = "details.back"
+const val TAG_DETAILS_EDIT = "details.edit"

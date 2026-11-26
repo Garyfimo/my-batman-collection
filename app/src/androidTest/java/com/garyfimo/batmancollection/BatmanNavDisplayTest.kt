@@ -97,7 +97,13 @@ class BatmanNavDisplayTest {
                     }
                     viewModelOf(::HomeViewModel)
                     viewModel { (id: String) -> DetailsViewModel(id = id, repository = get()) }
-                    viewModelOf(::AddFigureViewModel)
+                    viewModel { params ->
+                        AddFigureViewModel(
+                            repository = get(),
+                            analytics = get(),
+                            existingId = params.getOrNull<String>(),
+                        )
+                    }
                     viewModelOf(::LoginViewModel)
                     viewModelOf(::WishlistViewModel)
                     viewModelOf(::AddWishViewModel)

@@ -20,5 +20,11 @@ val figureModule = module {
     single<FigureRepository> { FirestoreFigureRepository(get(), get(), androidContext()) }
     viewModelOf(::HomeViewModel)
     viewModel { (id: String) -> DetailsViewModel(id = id, repository = get()) }
-    viewModelOf(::AddFigureViewModel)
+    viewModel { params ->
+        AddFigureViewModel(
+            repository = get(),
+            analytics = get(),
+            existingId = params.getOrNull<String>(),
+        )
+    }
 }
